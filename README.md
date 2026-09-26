@@ -24,7 +24,7 @@ evaluator.
 
 ## Quick start
 
-Follow [the manual setup guide](docs/manual-setup.md). In outline:
+Follow the [local setup guide](docs/local-setup.md). In outline:
 
 ```bash
 uv python install 3.12
@@ -52,7 +52,8 @@ session = create_livekit_session(agent=agent)
 The agent never reads or mutates the database directly. All database access is through the
 injected tau tools.
 
-See [Module 1 architecture](docs/module-1-architecture.md) for the contracts and event model.
+See [Module 1 implementation notes](docs/module-1-implementation-notes.md) for architectural
+decisions, contracts, and event flow.
 
 ## Quality checks
 
