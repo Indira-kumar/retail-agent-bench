@@ -1,0 +1,61 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "retail-agent-bench"
+version = "0.1.0"
+description = "A LiveKit-native retail support voice agent with runtime-injected tau tools and policy."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "livekit-agents==1.8.3",
+  "pydantic>=2.11,<3",
+  "python-dotenv>=1.1,<2",
+]
+
+[project.optional-dependencies]
+tau = [
+  "tau2 @ git+https://github.com/sierra-research/tau2-bench.git@b7ea9074c1cba482b30687fecdb5c8425fd6f619",
+  "websockets>=13,<17",
+]
+providers = [
+  "livekit-agents[cartesia,deepgram,openai]==1.8.3",
+]
+dev = [
+  "mypy>=1.18,<2",
+  "pytest>=8.4,<9",
+  "pytest-asyncio>=1.2,<2",
+  "ruff>=0.13,<1",
+]
+
+[project.scripts]
+retail-voice-agent = "retail_agent.server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/retail_agent"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["ASYNC", "B", "E", "F", "I", "RUF", "SIM", "UP"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["retail_agent"]
+mypy_path = "src"
+
+[[tool.mypy.overrides]]
+module = ["tau2.*"]
+ignore_missing_imports = true

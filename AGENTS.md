@@ -23,4 +23,4 @@ Coding guidelines:
 - format, sort imports, lint before any commit
 - use design principles when mentioned and when there is scope for simplification
 - use clean, concise descriptive names for functions (use snake case)
-- 
+- no function description comments, the function name tells what it does
