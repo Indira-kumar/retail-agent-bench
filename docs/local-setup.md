@@ -26,6 +26,8 @@ git -C .external/tau2-bench checkout b7ea9074c1cba482b30687fecdb5c8425fd6f619
 The default pipeline uses LiveKit Inference for STT, LLM, and TTS. It needs LiveKit server
 credentials but no separate model-provider tokens.
 
+Install live kit using [live kit setup docs](https://docs.livekit.io/reference/developer-tools/livekit-cli/#setup)
+
 ```bash
 lk cloud auth
 lk app env -w
@@ -39,6 +41,9 @@ LIVEKIT_API_KEY=...
 LIVEKIT_API_SECRET=...
 TAU2_DATA_DIR=/absolute/path/to/retail-agent-bench/.external/tau2-bench/data
 ```
+
+Replace `/absolute/path/to/retail-agent-bench` with the repository's actual absolute path. Do
+not leave the example value unchanged. Confirm the configured checkout contains the retail data:
 
 Keep `LIVEKIT_API_SECRET` out of clients, traces, and version control. A trusted backend must
 mint participant tokens for room clients. For a temporary manual token:
