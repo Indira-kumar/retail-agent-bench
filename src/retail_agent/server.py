@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import importlib
 import os
 from collections.abc import Callable
@@ -38,7 +39,7 @@ def load_runtime_bindings() -> RuntimeBindings:
 
 @server.rtc_session()
 async def retail_voice_agent(ctx: agents.JobContext) -> None:
-    bindings = load_runtime_bindings()
+    bindings = await asyncio.to_thread(load_runtime_bindings)
     behavior = RetailAgentConfig()
     agent = create_retail_agent(
         policy=bindings.policy,
