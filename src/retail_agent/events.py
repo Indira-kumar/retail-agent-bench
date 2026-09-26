@@ -108,8 +108,6 @@ class EventEmitter:
             logger.exception("Structured event sink failed for event %s", event.event_id)
 
     async def drain(self) -> None:
-        """Wait for scheduled deliveries; intended for graceful shutdown only."""
-
         if self._pending:
             await asyncio.gather(*tuple(self._pending), return_exceptions=True)
 
@@ -131,8 +129,6 @@ def _json_safe(value: Any) -> Any:
 
 
 def event_payload(event: Any) -> dict[str, Any]:
-    """Best-effort serialization of a LiveKit event without retaining audio buffers."""
-
     if hasattr(event, "to_dict"):
         value = event.to_dict()
     elif hasattr(event, "model_dump"):

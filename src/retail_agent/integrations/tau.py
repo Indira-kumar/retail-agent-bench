@@ -12,8 +12,6 @@ from retail_agent.runtime import RuntimeBindings
 
 
 def bindings_from_environment(environment: Any) -> RuntimeBindings:
-    """Extract policy and bound tools from a tau-compatible environment."""
-
     get_policy = getattr(environment, "get_policy", None)
     get_tools = getattr(environment, "get_tools", None)
     if not callable(get_policy) or not callable(get_tools):
@@ -30,8 +28,6 @@ def bindings_from_environment(environment: Any) -> RuntimeBindings:
 
 
 def load_default_retail_bindings() -> RuntimeBindings:
-    """Create a fresh tau retail environment and return its runtime bindings."""
-
     try:
         from tau2.domains.retail.environment import get_environment
     except ImportError as exc:
@@ -44,6 +40,6 @@ def load_default_retail_bindings() -> RuntimeBindings:
     except FileNotFoundError as exc:
         raise RuntimeError(
             "Tau benchmark data was not found. Set TAU2_DATA_DIR to the data/ directory "
-            "of the pinned tau2-bench checkout. See docs/manual-setup.md."
+            "of the pinned tau2-bench checkout. See docs/local-setup.md."
         ) from exc
     return bindings_from_environment(environment)

@@ -13,8 +13,6 @@ from typing import Any
 
 
 def serialize_tool_result(value: Any) -> str:
-    """Serialize a tau result for the LLM while preserving plain strings."""
-
     if isinstance(value, str):
         return value
     return json.dumps(

@@ -29,8 +29,6 @@ def create_livekit_session(
     agent: RetailSupportAgent,
     config: VoicePipelineConfig | None = None,
 ) -> AgentSession[Any]:
-    """Create the LiveKit runtime with explicitly VAD-only turn detection."""
-
     pipeline = config or VoicePipelineConfig()
     session: AgentSession[Any] = AgentSession(
         stt=pipeline.stt,

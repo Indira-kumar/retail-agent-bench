@@ -73,8 +73,6 @@ class VoicePipelineConfig:
 
     @classmethod
     def from_env(cls) -> VoicePipelineConfig:
-        """Load the documented LiveKit Inference configuration from the environment."""
-
         vad_model = os.getenv("RETAIL_VAD_MODEL", DEFAULT_VAD_MODEL)
         if vad_model != "silero":
             raise ValueError("RETAIL_VAD_MODEL must be 'silero'")

@@ -21,8 +21,6 @@ server = AgentServer()
 
 
 def load_runtime_bindings() -> RuntimeBindings:
-    """Load one fresh set of policy, tools, and DB bindings for a room."""
-
     path = os.getenv(
         "RETAIL_BINDINGS_FACTORY",
         "retail_agent.integrations.tau:load_default_retail_bindings",
@@ -40,8 +38,6 @@ def load_runtime_bindings() -> RuntimeBindings:
 
 @server.rtc_session()
 async def retail_voice_agent(ctx: agents.JobContext) -> None:
-    """Build a new isolated tau environment and LiveKit session for every room."""
-
     bindings = load_runtime_bindings()
     behavior = RetailAgentConfig()
     agent = create_retail_agent(

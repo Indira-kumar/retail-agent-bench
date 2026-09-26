@@ -58,8 +58,6 @@ def create_retail_agent(
     session_id: str | None = None,
     include_tools: list[str] | None = None,
 ) -> RetailSupportAgent:
-    """Create Module 1 from runtime-injected policy and DB-bound tau tools."""
-
     agent_config = config or RetailAgentConfig()
     emitter = EventEmitter(session_id or str(uuid4()), event_sink)
     adapter = adapt_tau_tools(tools, emitter=emitter, include=include_tools)
@@ -79,8 +77,6 @@ def create_retail_agent(
 
 
 def agent_metadata(agent: RetailSupportAgent) -> dict[str, Any]:
-    """Return evaluator-safe metadata without the policy text itself."""
-
     return {
         "session_id": agent.retail_state.session_id,
         "policy_sha256": agent.retail_state.policy_sha256,
