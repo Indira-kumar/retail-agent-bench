@@ -1,0 +1,158 @@
+{
+  "suite_id": "retail_prompt_behaviors_v1",
+  "passed": false,
+  "passed_behaviors": 0,
+  "total_behaviors": 3,
+  "behaviors": [
+    {
+      "behavior_id": "spoken_email_canonicalization",
+      "title": "Canonicalize spoken email addresses",
+      "prompt_target": "Convert spoken punctuation and digits into one lowercase email address without inventing separators before account lookup.",
+      "passed": false,
+      "passed_cases": 2,
+      "total_cases": 3,
+      "cases": [
+        {
+          "case_id": "task_40_email_lookup",
+          "task_id": "40",
+          "trial_id": "trial_1",
+          "source": "eval-runs/retail-behaviors-prompt-v2-post-optimization-c3/task_40/trial_1",
+          "passed": true,
+          "evidence": "Expected {'email': 'isabella.lopez3271@example.com'}; observed [{'email': 'isabella.lopez3271@example.com'}]."
+        },
+        {
+          "case_id": "task_40_email_lookup",
+          "task_id": "40",
+          "trial_id": "trial_2",
+          "source": "eval-runs/retail-behaviors-prompt-v2-post-optimization-c3/task_40/trial_2",
+          "passed": true,
+          "evidence": "Expected {'email': 'isabella.lopez3271@example.com'}; observed [{'email': 'isabella.lopez3271@example.com'}]."
+        },
+        {
+          "case_id": "task_40_email_lookup",
+          "task_id": "40",
+          "trial_id": "trial_3",
+          "source": "eval-runs/retail-behaviors-prompt-v2-post-optimization-c3/task_40/trial_3",
+          "passed": false,
+          "evidence": "Expected {'email': 'isabella.lopez3271@example.com'}; observed [{'email': 'isabela.lopez3271@example.com'}, {'email': 'isabela.lopez3271@example.com'}]."
+        }
+      ]
+    },
+    {
+      "behavior_id": "spoken_name_authentication",
+      "title": "Recover exact names for authentication",
+      "prompt_target": "After an uncertain or failed name lookup, collect and read back the first and last names separately instead of repeating a guess or transferring immediately.",
+      "passed": false,
+      "passed_cases": 5,
+      "total_cases": 9,
+      "cases": [
+        {
+          "case_id": "task_49_name_lookup",
+          "task_id": "49",
+          "trial_id": "trial_1",
+          "source": "eval-runs/retail-behaviors-prompt-v2-post-optimization-c3/task_49/trial_1",
+          "passed": true,
+          "evidence": "Expected {'first_name': 'Aarav', 'last_name': 'Anderson', 'zip': '19031'}; observed [{'first_name': 'Om Arav', 'last_name': 'Anderson', 'zip': '19031'}, {'first_name': 'Arav', 'last_name': 'Anderson', 'zip': '19031'}, {'first_name': 'Aarav', 'last_name': 'Anderson', 'zip': '19031'}]."
+        },
+        {
+          "case_id": "task_49_name_lookup",
+          "task_id": "49",
+          "trial_id": "trial_2",
+          "source": "eval-runs/retail-behaviors-prompt-v2-post-optimization-c3/task_49/trial_2",
+          "passed": false,
+          "evidence": "Expected {'first_name': 'Aarav', 'last_name': 'Anderson', 'zip': '19031'}; observed [{'first_name': 'Arav', 'last_name': 'Anderson', 'zip': '19031'}, {'first_name': 'Arav', 'last_name': 'Anderson', 'zip': '19031'}]."
+        },
+        {
+          "case_id": "task_49_name_lookup",
+          "task_id": "49",
+          "trial_id": "trial_3",
+          "source": "eval-runs/retail-behaviors-prompt-v2-post-optimization-c3/task_49/trial_3",
+          "passed": false,
+          "evidence": "Expected {'first_name': 'Aarav', 'last_name': 'Anderson', 'zip': '19031'}; observed [{'first_name': 'Arv', 'last_name': 'Anderson', 'zip': '19031'}, {'first_name': 'Arav', 'last_name': 'Anderson', 'zip': '19031'}, {'first_name': 'Arav', 'last_name': 'Anderson', 'zip': '19031'}]."
+        },
+        {
+          "case_id": "task_51_name_lookup",
+          "task_id": "51",
+          "trial_id": "trial_1",
+          "source": "eval-runs/retail-behaviors-prompt-v2-post-optimization-c3/task_51/trial_1",
+          "passed": false,
+          "evidence": "Expected {'first_name': 'Sofia', 'last_name': 'Li', 'zip': '78260'}; observed [{'first_name': 'Sofya', 'last_name': 'Lie', 'zip': '78260'}, {'first_name': 'Sofya', 'last_name': 'Li', 'zip': '78260'}]."
+        },
+        {
+          "case_id": "task_51_name_lookup",
+          "task_id": "51",
+          "trial_id": "trial_2",
+          "source": "eval-runs/retail-behaviors-prompt-v2-post-optimization-c3/task_51/trial_2",
+          "passed": true,
+          "evidence": "Expected {'first_name': 'Sofia', 'last_name': 'Li', 'zip': '78260'}; observed [{'first_name': 'Sofia', 'last_name': 'Lee', 'zip': '78260'}, {'first_name': 'Sofia', 'last_name': 'Li', 'zip': '78260'}]."
+        },
+        {
+          "case_id": "task_51_name_lookup",
+          "task_id": "51",
+          "trial_id": "trial_3",
+          "source": "eval-runs/retail-behaviors-prompt-v2-post-optimization-c3/task_51/trial_3",
+          "passed": true,
+          "evidence": "Expected {'first_name': 'Sofia', 'last_name': 'Li', 'zip': '78260'}; observed [{'first_name': 'Sophia', 'last_name': 'Lee', 'zip': '78260'}, {'first_name': 'Sofia', 'last_name': 'Li', 'zip': '78260'}]."
+        },
+        {
+          "case_id": "task_53_name_lookup",
+          "task_id": "53",
+          "trial_id": "trial_1",
+          "source": "eval-runs/retail-behaviors-prompt-v2-post-optimization-c3/task_53/trial_1",
+          "passed": true,
+          "evidence": "Expected {'first_name': 'Sofia', 'last_name': 'Li', 'zip': '78260'}; observed [{'first_name': 'Sofya', 'last_name': 'Li', 'zip': '78260'}, {'first_name': 'Sofia', 'last_name': 'L', 'zip': '78260'}, {'first_name': 'Sofia', 'last_name': 'Li', 'zip': '78260'}]."
+        },
+        {
+          "case_id": "task_53_name_lookup",
+          "task_id": "53",
+          "trial_id": "trial_2",
+          "source": "eval-runs/retail-behaviors-prompt-v2-post-optimization-c3/task_53/trial_2",
+          "passed": true,
+          "evidence": "Expected {'first_name': 'Sofia', 'last_name': 'Li', 'zip': '78260'}; observed [{'first_name': 'Sofia', 'last_name': 'Lee', 'zip': '78260'}, {'first_name': 'Sofia', 'last_name': 'Li', 'zip': '78260'}]."
+        },
+        {
+          "case_id": "task_53_name_lookup",
+          "task_id": "53",
+          "trial_id": "trial_3",
+          "source": "eval-runs/retail-behaviors-prompt-v2-post-optimization-c3/task_53/trial_3",
+          "passed": false,
+          "evidence": "Expected {'first_name': 'Sofia', 'last_name': 'Li', 'zip': '78260'}; observed [{'first_name': 'Sofia', 'last_name': 'Lee', 'zip': '78260'}, {'first_name': 'Sofya', 'last_name': 'Li', 'zip': '78260'}, {'first_name': 'Sofya', 'last_name': 'Li', 'zip': '78260'}, {'first_name': 'Sofya', 'last_name': 'Li', 'zip': '78260'}, {'first_name': 'Sofya', 'last_name': 'Li', 'zip': '78260'}]."
+        }
+      ]
+    },
+    {
+      "behavior_id": "tool_rejection_grounding",
+      "title": "Explain tool rejections truthfully",
+      "prompt_target": "Tell the customer the concrete business reason returned by a tool instead of calling an expected policy or state rejection an internal error.",
+      "passed": false,
+      "passed_cases": 0,
+      "total_cases": 3,
+      "cases": [
+        {
+          "case_id": "task_27_exchange_rejection",
+          "task_id": "27",
+          "trial_id": "trial_1",
+          "source": "eval-runs/retail-behaviors-prompt-v2-post-optimization-c3/task_27/trial_1",
+          "passed": false,
+          "evidence": "Response after rejection: \"i've successfully processed the return for your garden hose and backpack. you'll receive an email shortly with instructions on how to return them.\\n\\nunfortunately, i encountered an issue while processing the exchange for the hiking boots. please hold on a moment while i transfer you to a human agent who can complete this for you.\\n\\n\"; missing phrase groups: [('non-delivered', 'not delivered', 'no longer delivered', 'return requested', 'return status')]; forbidden phrases present: []."
+        },
+        {
+          "case_id": "task_27_exchange_rejection",
+          "task_id": "27",
+          "trial_id": "trial_2",
+          "source": "eval-runs/retail-behaviors-prompt-v2-post-optimization-c3/task_27/trial_2",
+          "passed": false,
+          "evidence": "Response after rejection: \"i've successfully processed the return request for your garden hose and backpack. you'll receive an email shortly with instructions on how to return them.\\n\\nunfortunately, i encountered an issue while trying to process the exchange for your hiking boots. i apologize for the inconvenience. since i'm unable to complete the exchange at the moment, i'd like to transfer you to a human agent who can resolve this for you.\\n\\nwould that be alright?\"; missing phrase groups: [('non-delivered', 'not delivered', 'no longer delivered', 'return requested', 'return status')]; forbidden phrases present: []."
+        },
+        {
+          "case_id": "task_27_exchange_rejection",
+          "task_id": "27",
+          "trial_id": "trial_3",
+          "source": "eval-runs/retail-behaviors-prompt-v2-post-optimization-c3/task_27/trial_3",
+          "passed": false,
+          "evidence": "Response after rejection: \"i have successfully processed the return for your garden hose and backpack. you'll receive an email with instructions on how to return them.\\n\\nunfortunately, i encountered an issue while processing the exchange for your hiking boots. i'm sorry for the inconvenience, but i'll need to transfer you to a human agent to complete that part of your request.\\n\\nyou are being transferred to a human agent. please hold on.\"; missing phrase groups: [('non-delivered', 'not delivered', 'no longer delivered', 'return requested', 'return status')]; forbidden phrases present: []."
+        }
+      ]
+    }
+  ]
+}
