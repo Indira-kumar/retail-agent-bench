@@ -18,6 +18,8 @@ from retail_agent.config import (
 )
 from retail_agent.model_providers import LLMProvider, parse_llm_provider
 
+DEFAULT_SCORER_LLM = f"openrouter/{DEFAULT_LLM_MODEL}"
+
 
 @dataclass(frozen=True, slots=True)
 class EvaluatorPipeline:
@@ -43,6 +45,7 @@ class BenchmarkConfig:
     evaluator_tts: str = DEFAULT_TTS_MODEL
     evaluator_vad: Literal["silero"] = "silero"
     evaluator_llm_provider: LLMProvider = "livekit"
+    scorer_llm: str = DEFAULT_SCORER_LLM
     stt_max_retry: int = DEFAULT_STT_MAX_RETRY
     stt_retry_interval: float = DEFAULT_STT_RETRY_INTERVAL
     stt_connect_timeout: float = DEFAULT_STT_CONNECT_TIMEOUT
@@ -54,6 +57,8 @@ class BenchmarkConfig:
             raise ValueError("evaluator_llm_provider must be 'livekit' or 'openrouter'")
         if not self.evaluator_stt or not self.evaluator_stt_language or not self.evaluator_tts:
             raise ValueError("evaluator STT, STT language, and TTS values must be non-empty")
+        if not self.scorer_llm.startswith("openrouter/"):
+            raise ValueError("scorer_llm must use the openrouter/<model> format")
         if not 1 <= self.concurrency <= 5:
             raise ValueError("concurrency must be between 1 and 5")
         if self.task_timeout_seconds <= 0 or self.report_timeout_seconds <= 0:
@@ -71,6 +76,9 @@ class BenchmarkConfig:
         concurrency: int | None = None,
         task_timeout_seconds: float | None = None,
     ) -> BenchmarkConfig:
+        evaluator_llm = os.getenv(
+            "EVAL_LLM_MODEL", os.getenv("RETAIL_LLM_MODEL", DEFAULT_LLM_MODEL)
+        )
         return cls(
             livekit_url=os.getenv("LIVEKIT_URL", ""),
             livekit_api_key=os.getenv("LIVEKIT_API_KEY", ""),
@@ -91,13 +99,12 @@ class BenchmarkConfig:
                 "EVAL_STT_LANGUAGE",
                 os.getenv("RETAIL_STT_LANGUAGE", DEFAULT_STT_LANGUAGE),
             ),
-            evaluator_llm=os.getenv(
-                "EVAL_LLM_MODEL", os.getenv("RETAIL_LLM_MODEL", DEFAULT_LLM_MODEL)
-            ),
+            evaluator_llm=evaluator_llm,
             evaluator_llm_provider=parse_llm_provider(
                 os.getenv("EVAL_LLM_PROVIDER", os.getenv("RETAIL_LLM_PROVIDER")),
                 variable="EVAL_LLM_PROVIDER",
             ),
+            scorer_llm=os.getenv("EVAL_SCORER_LLM", f"openrouter/{evaluator_llm}"),
             evaluator_tts=os.getenv(
                 "EVAL_TTS_MODEL", os.getenv("RETAIL_TTS_MODEL", DEFAULT_TTS_MODEL)
             ),

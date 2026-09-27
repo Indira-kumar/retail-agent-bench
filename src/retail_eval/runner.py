@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import dataclass
 from typing import Any
@@ -42,6 +43,7 @@ class BenchmarkRunner:
         trials: int,
         experiment_id: str | None = None,
     ) -> tuple[ArtifactStore, list[dict[str, Any]]]:
+        _validate_scorer_credentials(self._config.scorer_llm)
         if not 1 <= len(tasks) <= 30:
             raise ValueError("Select between 1 and 30 benchmark tasks")
         if trials < 1:
@@ -113,7 +115,7 @@ class BenchmarkRunner:
 
         scoring_error: Exception | None = None
         try:
-            await _score(result, spec.task)
+            await _score(result, spec.task, self._config.scorer_llm)
         except Exception as exc:
             scoring_error = exc
             logger.exception("Scoring failed for task=%s trial=%s", spec.task.id, spec.trial)
@@ -165,8 +167,11 @@ async def run_bounded[T, R](
     return await asyncio.gather(*(run_one(item) for item in items))
 
 
-async def _score(result: TrialResult, task: Any) -> None:
+async def _score(result: TrialResult, task: Any, scorer_llm: str) -> None:
+    from tau2.evaluator import evaluator_nl_assertions
     from tau2.evaluator.evaluator import EvaluationType, evaluate_simulation
+
+    evaluator_nl_assertions.DEFAULT_LLM_NL_ASSERTIONS = scorer_llm
 
     reward = await asyncio.to_thread(
         evaluate_simulation,
@@ -177,6 +182,13 @@ async def _score(result: TrialResult, task: Any) -> None:
         domain="retail",
     )
     result.simulation.reward_info = reward
+
+
+def _validate_scorer_credentials(scorer_llm: str) -> None:
+    if not scorer_llm.startswith("openrouter/"):
+        raise ValueError("EVAL_SCORER_LLM must use the openrouter/<model> format")
+    if not os.getenv("OPENROUTER_API_KEY"):
+        raise ValueError("OPENROUTER_API_KEY is required by EVAL_SCORER_LLM")
 
 
 def _write_trial_artifacts(

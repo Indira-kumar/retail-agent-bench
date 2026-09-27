@@ -4,10 +4,12 @@ import asyncio
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from retail_eval import livekit_runner
 from retail_eval.config import BenchmarkConfig
 from retail_eval.livekit_runner import _wait_for_trial_end, default_pipeline
-from retail_eval.runner import run_bounded
+from retail_eval.runner import _validate_scorer_credentials, run_bounded
 from retail_eval.trace import EvaluatorEventCollector, RoomTraceCollector
 
 
@@ -48,6 +50,30 @@ def test_default_eval_pipeline_uses_deepgram_for_speech(monkeypatch: Any) -> Non
     assert pipeline.stt.model == "nova-3"
     assert pipeline.tts.provider == "Deepgram"
     assert pipeline.tts.model == "aura-2-andromeda-en"
+
+
+def test_tau_scorer_defaults_to_openrouter(monkeypatch: Any) -> None:
+    monkeypatch.setenv("LIVEKIT_URL", "wss://example.test")
+    monkeypatch.setenv("LIVEKIT_API_KEY", "key")
+    monkeypatch.setenv("LIVEKIT_API_SECRET", "secret")
+    monkeypatch.setenv("RETAIL_LLM_MODEL", "google/gemma-4-31b-it")
+    monkeypatch.delenv("EVAL_SCORER_LLM", raising=False)
+
+    config = BenchmarkConfig.from_env()
+
+    assert config.scorer_llm == "openrouter/google/gemma-4-31b-it"
+
+
+def test_openrouter_scorer_fails_before_run_without_credentials(monkeypatch: Any) -> None:
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+
+    with pytest.raises(ValueError, match="OPENROUTER_API_KEY"):
+        _validate_scorer_credentials("openrouter/google/gemma-4-31b-it")
+
+
+def test_tau_scorer_rejects_non_openrouter_models() -> None:
+    with pytest.raises(ValueError, match="openrouter/<model>"):
+        _validate_scorer_credentials("gpt-4.1-2025-04-14")
 
 
 async def test_trial_ends_after_terminal_tool_response() -> None:
