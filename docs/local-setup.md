@@ -88,3 +88,5 @@ Replace `<experiment-id>` with the directory created by the evaluation:
 ```bash
 uv run retail-eval visualize eval-runs/<experiment-id>
 ```
+Reference:
+![trajectory visualizer](../assets/image-1.png)
