@@ -27,3 +27,9 @@ task 49 - name error, agent couldnt understand the spelling
 task 53 - name error, same as task 51
 task 68 - trajectory was as expected, scoring error
 task 101 - user disconnected after time out
+
+## Tau Bench Run 4
+task 36 - DB state mismatch, actions were mismatching as well (modify action wasnt called). Order was cancelled as that was one of the options explored by user
+task 39 - pass, trajectory as expected
+task 70 - pass, trajectory as expected
+task 108 - user changed intention to understand value of an item instead of returning

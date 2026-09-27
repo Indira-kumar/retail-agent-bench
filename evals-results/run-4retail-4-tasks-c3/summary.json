@@ -1,0 +1,56 @@
+[
+  {
+    "run_id": "task-36-trial-1-361fe862",
+    "task_id": "36",
+    "trial": 1,
+    "reward": 0.0,
+    "termination_reason": "user_stop",
+    "duration_seconds": 364.9416630830092,
+    "failure_labels": [
+      "db_state_mismatch",
+      "expected_action_missing",
+      "tool_error"
+    ],
+    "artifact_path": "task_36/trial_1",
+    "livekit_room": "retail-eval-task-36-trial-1-361fe862"
+  },
+  {
+    "run_id": "task-39-trial-1-c83a65cd",
+    "task_id": "39",
+    "trial": 1,
+    "reward": 1.0,
+    "termination_reason": "user_stop",
+    "duration_seconds": 262.04604062500584,
+    "failure_labels": [
+      "expected_action_missing"
+    ],
+    "artifact_path": "task_39/trial_1",
+    "livekit_room": "retail-eval-task-39-trial-1-c83a65cd"
+  },
+  {
+    "run_id": "task-70-trial-1-b9b56835",
+    "task_id": "70",
+    "trial": 1,
+    "reward": 1.0,
+    "termination_reason": "user_stop",
+    "duration_seconds": 235.40391508300672,
+    "failure_labels": [],
+    "artifact_path": "task_70/trial_1",
+    "livekit_room": "retail-eval-task-70-trial-1-b9b56835"
+  },
+  {
+    "run_id": "task-108-trial-1-7ee26926",
+    "task_id": "108",
+    "trial": 1,
+    "reward": 0.0,
+    "termination_reason": "user_stop",
+    "duration_seconds": 271.10666770899843,
+    "failure_labels": [
+      "db_state_mismatch",
+      "expected_action_missing",
+      "tool_error"
+    ],
+    "artifact_path": "task_108/trial_1",
+    "livekit_room": "retail-eval-task-108-trial-1-7ee26926"
+  }
+]
