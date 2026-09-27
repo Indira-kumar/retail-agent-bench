@@ -23,6 +23,7 @@ from livekit.agents import (
     llm,
 )
 from livekit.agents.utils import http_context
+from livekit.agents.voice.room_io import RoomOptions
 
 from retail_agent.trace_transport import CONTROL_TOPIC
 from retail_eval.artifacts import TrialPaths
@@ -31,6 +32,7 @@ from retail_eval.config import BenchmarkConfig, EvaluatorPipeline
 from retail_eval.trace import EvaluatorEventCollector, RoomTraceCollector, build_tau_messages
 
 logger = logging.getLogger(__name__)
+INITIAL_CUSTOMER_TURN_TIMEOUT_SECONDS = 15.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -133,10 +135,18 @@ class LiveKitTrialRunner:
         output_writer = WavWriter(paths.output_audio)
         try:
             await room.connect(self._config.livekit_url, token)
-            await session.start(agent=evaluator, room=room, record=False)
+            await session.start(
+                agent=evaluator,
+                room=room,
+                room_options=RoomOptions(
+                    participant_kinds=[rtc.ParticipantKind.PARTICIPANT_KIND_AGENT]
+                ),
+                record=False,
+            )
             _attach_audio_recorders(session, input_writer, output_writer)
             await self._dispatch_agent(room_name, task, trial, run_id)
             agent_dispatched = True
+            await _start_customer_turn(session, room_trace, evaluator_events)
             try:
                 await asyncio.wait_for(completion.wait(), self._config.task_timeout_seconds)
             except TimeoutError:
@@ -284,6 +294,39 @@ def _attach_audio_recorders(
         session.output.audio = RecordingAudioOutput(session.output.audio, input_writer)
     if session.input.audio is not None:
         session.input.audio = RecordingAudioInput(session.input.audio, output_writer)
+
+
+async def _start_customer_turn(
+    session: AgentSession[Any],
+    room_trace: RoomTraceCollector,
+    evaluator_events: EvaluatorEventCollector,
+) -> None:
+    agent_message_task = asyncio.create_task(room_trace.agent_message_received.wait())
+    customer_speech_task = asyncio.create_task(evaluator_events.customer_speech_started.wait())
+    try:
+        done, _ = await asyncio.wait(
+            {agent_message_task, customer_speech_task},
+            timeout=INITIAL_CUSTOMER_TURN_TIMEOUT_SECONDS,
+            return_when=asyncio.FIRST_COMPLETED,
+        )
+    finally:
+        for task in (agent_message_task, customer_speech_task):
+            if not task.done():
+                task.cancel()
+        await asyncio.gather(agent_message_task, customer_speech_task, return_exceptions=True)
+
+    if evaluator_events.customer_speech_started.is_set():
+        return
+
+    if not done:
+        logger.warning("Retail agent did not publish an opening message before customer turn")
+
+    session.generate_reply(
+        instructions=(
+            "Begin the customer side of the call now. State the first part of your scenario "
+            "naturally and concisely, as a spoken reply to the retail agent's greeting."
+        )
+    )
 
 
 def _build_simulation(

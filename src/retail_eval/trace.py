@@ -23,6 +23,7 @@ class RoomTraceCollector:
         self.messages: list[dict[str, Any]] = []
         self.session_report: dict[str, Any] | None = None
         self._assembler = TraceChunkAssembler()
+        self.agent_message_received = asyncio.Event()
         self.report_received = asyncio.Event()
 
     def attach(self, room: rtc.Room) -> None:
@@ -38,6 +39,8 @@ class RoomTraceCollector:
             if message is None:
                 return
             self.messages.append(message)
+            if _is_assistant_message(message):
+                self.agent_message_received.set()
             if message.get("message_type") == "session_report":
                 report = message.get("report")
                 if isinstance(report, dict):
@@ -48,6 +51,7 @@ class RoomTraceCollector:
 class EvaluatorEventCollector:
     def __init__(self) -> None:
         self.events: list[dict[str, Any]] = []
+        self.customer_speech_started = asyncio.Event()
 
     def attach(self, session: Any) -> None:
         event_names = (
@@ -63,8 +67,40 @@ class EvaluatorEventCollector:
 
             def on_event(event: Any, *, name: str = event_name) -> None:
                 self.events.append({"event_name": name, "event": event_payload(event)})
+                if name == "agent_state_changed":
+                    payload = event_payload(event)
+                    if payload.get("new_state") == "speaking":
+                        self.customer_speech_started.set()
+                elif name == "conversation_item_added" and _is_message_from_agent(event):
+                    self.customer_speech_started.set()
 
             session.on(event_name, on_event)
+
+
+def _is_assistant_message(message: Mapping[str, Any]) -> bool:
+    if message.get("message_type") != "structured_event":
+        return False
+    event = message.get("event")
+    if not isinstance(event, Mapping):
+        return False
+    payload = event.get("payload")
+    if not isinstance(payload, Mapping) or payload.get("event_name") != "conversation_item_added":
+        return False
+    return _message_role(payload.get("event")) == "assistant"
+
+
+def _is_message_from_agent(event: Mapping[str, Any]) -> bool:
+    return _message_role(event) == "assistant"
+
+
+def _message_role(event: Any) -> str | None:
+    if not isinstance(event, Mapping):
+        return None
+    item = event.get("item")
+    if not isinstance(item, Mapping) or item.get("type") != "message":
+        return None
+    role = item.get("role")
+    return str(role) if role in {"user", "assistant"} else None
 
 
 def build_tau_messages(trace_messages: list[dict[str, Any]]) -> list[Any]:

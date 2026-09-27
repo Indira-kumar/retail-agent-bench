@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from types import SimpleNamespace
 
 from tau2.data_model.message import AssistantMessage, ToolMessage, UserMessage
 
-from retail_eval.trace import build_tau_messages
+from retail_eval.trace import EvaluatorEventCollector, build_tau_messages
 
 
 def _event(kind: str, payload: dict[str, object], offset: float) -> dict[str, object]:
@@ -92,3 +93,22 @@ def test_build_tau_messages_preserves_tau_error_format() -> None:
     assert isinstance(messages[1], ToolMessage)
     assert messages[1].content == "Error: Order not found"
     assert messages[1].error is True
+
+
+def test_evaluator_event_collector_detects_customer_speech() -> None:
+    class FakeSession:
+        def __init__(self) -> None:
+            self.handlers: dict[str, object] = {}
+
+        def on(self, name: str, callback: object) -> None:
+            self.handlers[name] = callback
+
+    session = FakeSession()
+    collector = EvaluatorEventCollector()
+    collector.attach(session)
+
+    callback = session.handlers["agent_state_changed"]
+    assert callable(callback)
+    callback(SimpleNamespace(old_state="listening", new_state="speaking"))
+
+    assert collector.customer_speech_started.is_set()

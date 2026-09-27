@@ -118,6 +118,8 @@ class RoomEventPublisher:
             return
 
         async with self._publish_lock:
+            if self._closed or not self._room.isconnected():
+                return
             try:
                 for chunk in encode_trace_message(message, message_id=message_id):
                     await self._room.local_participant.publish_data(
@@ -126,6 +128,8 @@ class RoomEventPublisher:
                         topic=TRACE_TOPIC,
                     )
             except Exception:
+                if self._closed or not self._room.isconnected():
+                    return
                 logger.exception("Failed to publish evaluation trace message")
 
 
