@@ -1,0 +1,109 @@
+{
+  "reward": 0.0,
+  "db_check": {
+    "db_match": false,
+    "db_reward": 0.0
+  },
+  "env_assertions": [],
+  "action_checks": [
+    {
+      "action": {
+        "action_id": "40_0",
+        "requestor": "assistant",
+        "name": "find_user_id_by_email",
+        "arguments": {
+          "email": "isabella.lopez3271@example.com"
+        },
+        "info": null,
+        "compare_args": null
+      },
+      "action_match": false,
+      "action_reward": 0.0,
+      "tool_type": "read"
+    },
+    {
+      "action": {
+        "action_id": "40_1",
+        "requestor": "assistant",
+        "name": "get_user_details",
+        "arguments": {
+          "user_id": "isabella_lopez_6490"
+        },
+        "info": null,
+        "compare_args": null
+      },
+      "action_match": false,
+      "action_reward": 0.0,
+      "tool_type": "read"
+    },
+    {
+      "action": {
+        "action_id": "40_2",
+        "requestor": "assistant",
+        "name": "get_order_details",
+        "arguments": {
+          "order_id": "#W4923227"
+        },
+        "info": null,
+        "compare_args": null
+      },
+      "action_match": false,
+      "action_reward": 0.0,
+      "tool_type": "read"
+    },
+    {
+      "action": {
+        "action_id": "40_3",
+        "requestor": "assistant",
+        "name": "modify_pending_order_payment",
+        "arguments": {
+          "order_id": "#W4923227",
+          "payment_method_id": "credit_card_8897086"
+        },
+        "info": null,
+        "compare_args": null
+      },
+      "action_match": false,
+      "action_reward": 0.0,
+      "tool_type": "write"
+    }
+  ],
+  "nl_assertions": [
+    {
+      "nl_assertion": "Agent should tell the user their gift card balance is $60.",
+      "met": false,
+      "justification": "The agent was unable to authenticate the user and transferred the call to a human agent before any account details, including gift card balances, could be accessed or shared."
+    },
+    {
+      "nl_assertion": "Agent should tell the user their recent order was paid with a Mastercard.",
+      "met": false,
+      "justification": "The agent never successfully located the user's account and therefore could not provide information regarding the payment method of a recent order."
+    }
+  ],
+  "communicate_checks": [
+    {
+      "info": "60",
+      "met": false,
+      "justification": "Information '60' not communicated."
+    },
+    {
+      "info": "mastercard",
+      "met": false,
+      "justification": "Information 'mastercard' not communicated."
+    }
+  ],
+  "reward_basis": [
+    "DB",
+    "NL_ASSERTION"
+  ],
+  "reward_breakdown": {
+    "DB": 0.0,
+    "NL_ASSERTION": 0.0
+  },
+  "info": {
+    "env": null,
+    "nl": null,
+    "communicate": null,
+    "action": null
+  }
+}
