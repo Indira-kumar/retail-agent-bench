@@ -93,6 +93,11 @@ settings. Both paths construct speech clients with the same `DeepgramSpeechProvi
 `DEEPGRAM_API_KEY`. Set `EVAL_LLM_PROVIDER=openrouter` to use OpenRouter for evaluator LLM calls;
 evaluator speech remains on direct Deepgram.
 
+The evaluator removes bracketed voice-stage directions before TTS and explicitly instructs the
+customer model not to narrate words such as `pause`, `beat`, or `silence`. Tau's NL-assertion
+scorer requests JSON output and retries transient or malformed scoring responses. Configure this
+with `EVAL_SCORER_MAX_ATTEMPTS` and `EVAL_SCORER_RETRY_DELAY_SECONDS`.
+
 `LiveKitTrialRunner(..., pipeline_factory=...)` accepts a factory returning
 `EvaluatorPipeline`. The factory seam remains available for specialized test pipelines;
 benchmark orchestration, artifacts, and tau scoring do not change.

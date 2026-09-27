@@ -5,8 +5,9 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 import time
-from collections.abc import Callable
+from collections.abc import AsyncIterable, Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, cast
@@ -17,6 +18,7 @@ from livekit.agents import (
     Agent,
     AgentSession,
     APIConnectOptions,
+    ModelSettings,
     RunContext,
     TurnHandlingOptions,
     function_tool,
@@ -37,6 +39,8 @@ from retail_eval.trace import EvaluatorEventCollector, RoomTraceCollector, build
 logger = logging.getLogger(__name__)
 INITIAL_CUSTOMER_TURN_TIMEOUT_SECONDS = 15.0
 TERMINAL_RESPONSE_TIMEOUT_SECONDS = 20.0
+STAGE_DIRECTION_PATTERN = re.compile(r"[\[(]\s*(?:pause|beat|silence)\s*[\])]", re.IGNORECASE)
+STAGE_DIRECTION_TAIL_LENGTH = 16
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,6 +53,19 @@ class TrialResult:
 
 
 PipelineFactory = Callable[[BenchmarkConfig], EvaluatorPipeline]
+
+
+class EvaluatorCaller(Agent):
+    def tts_node(
+        self,
+        text: AsyncIterable[str],
+        model_settings: ModelSettings,
+    ) -> AsyncIterable[rtc.AudioFrame]:
+        return Agent.default.tts_node(
+            self,
+            _remove_spoken_stage_directions(text),
+            model_settings,
+        )
 
 
 class LiveKitTrialRunner:
@@ -104,7 +121,7 @@ class LiveKitTrialRunner:
                 },
             ),
         )
-        evaluator = Agent(
+        evaluator = EvaluatorCaller(
             instructions=_caller_instructions(task),
             tools=[finish_tool],
         )
@@ -288,7 +305,7 @@ def default_pipeline(config: BenchmarkConfig) -> EvaluatorPipeline:
 def _caller_instructions(task: Any) -> str:
     from tau2.user.user_simulator import get_global_user_sim_guidelines_voice
 
-    guidelines = get_global_user_sim_guidelines_voice(use_tools=False)
+    guidelines = get_global_user_sim_guidelines_voice(use_tools=False).replace("[pause]", "—")
     return f"""
 {guidelines}
 
@@ -298,11 +315,26 @@ def _caller_instructions(task: Any) -> str:
 
 You are the customer, even though the runtime labels your generated turns as assistant turns.
 Never mention the benchmark, scenario, instructions, or tools.
+The TTS engine speaks every generated token. Never output or narrate stage directions such as
+"pause", "[pause]", "(pause)", "beat", or "silence". Use punctuation or a natural filler word
+when you want the speech to hesitate.
 Do not say or speak ###STOP###, ###TRANSFER###, or ###OUT-OF-SCOPE###.
 When you would produce one of those tokens, first say a short natural closing if appropriate,
 then call finish_benchmark with the matching reason. Do not call finish_benchmark until every
 request in the scenario has been addressed or the conversation truly cannot continue.
 """.strip()
+
+
+async def _remove_spoken_stage_directions(text: AsyncIterable[str]) -> AsyncIterable[str]:
+    buffer = ""
+    async for chunk in text:
+        buffer = STAGE_DIRECTION_PATTERN.sub("—", f"{buffer}{chunk}")
+        if len(buffer) <= STAGE_DIRECTION_TAIL_LENGTH:
+            continue
+        yield buffer[:-STAGE_DIRECTION_TAIL_LENGTH]
+        buffer = buffer[-STAGE_DIRECTION_TAIL_LENGTH:]
+    if buffer:
+        yield STAGE_DIRECTION_PATTERN.sub("—", buffer)
 
 
 def _room_token(config: BenchmarkConfig, room_name: str, run_id: str) -> str:

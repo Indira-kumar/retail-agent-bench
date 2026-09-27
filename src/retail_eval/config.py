@@ -46,6 +46,8 @@ class BenchmarkConfig:
     evaluator_vad: Literal["silero"] = "silero"
     evaluator_llm_provider: LLMProvider = "livekit"
     scorer_llm: str = DEFAULT_SCORER_LLM
+    scorer_max_attempts: int = 3
+    scorer_retry_delay_seconds: float = 1.0
     stt_max_retry: int = DEFAULT_STT_MAX_RETRY
     stt_retry_interval: float = DEFAULT_STT_RETRY_INTERVAL
     stt_connect_timeout: float = DEFAULT_STT_CONNECT_TIMEOUT
@@ -59,6 +61,8 @@ class BenchmarkConfig:
             raise ValueError("evaluator STT, STT language, and TTS values must be non-empty")
         if not self.scorer_llm.startswith("openrouter/"):
             raise ValueError("scorer_llm must use the openrouter/<model> format")
+        if self.scorer_max_attempts < 1 or self.scorer_retry_delay_seconds < 0:
+            raise ValueError("scorer attempts must be positive and retry delay cannot be negative")
         if not 1 <= self.concurrency <= 5:
             raise ValueError("concurrency must be between 1 and 5")
         if self.task_timeout_seconds <= 0 or self.report_timeout_seconds <= 0:
@@ -105,6 +109,8 @@ class BenchmarkConfig:
                 variable="EVAL_LLM_PROVIDER",
             ),
             scorer_llm=os.getenv("EVAL_SCORER_LLM", f"openrouter/{evaluator_llm}"),
+            scorer_max_attempts=int(os.getenv("EVAL_SCORER_MAX_ATTEMPTS", "3")),
+            scorer_retry_delay_seconds=float(os.getenv("EVAL_SCORER_RETRY_DELAY_SECONDS", "1.0")),
             evaluator_tts=os.getenv(
                 "EVAL_TTS_MODEL", os.getenv("RETAIL_TTS_MODEL", DEFAULT_TTS_MODEL)
             ),

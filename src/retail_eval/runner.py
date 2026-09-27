@@ -115,7 +115,13 @@ class BenchmarkRunner:
 
         scoring_error: Exception | None = None
         try:
-            await _score(result, spec.task, self._config.scorer_llm)
+            await _score(
+                result,
+                spec.task,
+                self._config.scorer_llm,
+                max_attempts=self._config.scorer_max_attempts,
+                retry_delay_seconds=self._config.scorer_retry_delay_seconds,
+            )
         except Exception as exc:
             scoring_error = exc
             logger.exception("Scoring failed for task=%s trial=%s", spec.task.id, spec.trial)
@@ -167,21 +173,45 @@ async def run_bounded[T, R](
     return await asyncio.gather(*(run_one(item) for item in items))
 
 
-async def _score(result: TrialResult, task: Any, scorer_llm: str) -> None:
+async def _score(
+    result: TrialResult,
+    task: Any,
+    scorer_llm: str,
+    *,
+    max_attempts: int,
+    retry_delay_seconds: float,
+) -> None:
     from tau2.evaluator import evaluator_nl_assertions
     from tau2.evaluator.evaluator import EvaluationType, evaluate_simulation
 
     evaluator_nl_assertions.DEFAULT_LLM_NL_ASSERTIONS = scorer_llm
+    evaluator_nl_assertions.DEFAULT_LLM_NL_ASSERTIONS_ARGS = {
+        **evaluator_nl_assertions.DEFAULT_LLM_NL_ASSERTIONS_ARGS,
+        "response_format": {"type": "json_object"},
+    }
 
-    reward = await asyncio.to_thread(
-        evaluate_simulation,
-        simulation=result.simulation,
-        task=task,
-        evaluation_type=EvaluationType.ALL,
-        solo_mode=False,
-        domain="retail",
-    )
-    result.simulation.reward_info = reward
+    for attempt in range(1, max_attempts + 1):
+        try:
+            reward = await asyncio.to_thread(
+                evaluate_simulation,
+                simulation=result.simulation,
+                task=task,
+                evaluation_type=EvaluationType.ALL,
+                solo_mode=False,
+                domain="retail",
+            )
+            result.simulation.reward_info = reward
+            return
+        except Exception:
+            if attempt == max_attempts:
+                raise
+            logger.warning(
+                "Scoring attempt %s/%s failed; retrying",
+                attempt,
+                max_attempts,
+                exc_info=True,
+            )
+            await asyncio.sleep(retry_delay_seconds * attempt)
 
 
 def _validate_scorer_credentials(scorer_llm: str) -> None:
