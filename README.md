@@ -2,7 +2,7 @@
 
 ## Implementation approach
 
-![Architecture diagram](assets/image-2.png)
+![Architecture diagram](assets/runtime-architecture.png)
 
 The project has three modules:
 
