@@ -22,7 +22,8 @@ For each LiveKit room:
 1. The bindings factory creates an isolated DB and DB-bound tau toolkit.
 2. `create_retail_agent` receives the policy and tools, then adapts the tools and composes the
    policy prompt.
-3. `create_livekit_session` configures LiveKit Inference and pure Silero VAD handling.
+3. `create_livekit_session` configures direct Deepgram STT/TTS, the selected LLM, and pure
+   Silero VAD handling.
 4. LiveKit starts the agent in the room and owns the voice/tool execution loop.
 5. Module 2 consumes structured events and replays completed tool calls through tau's evaluator
    to derive the final DB state.
@@ -72,9 +73,9 @@ shutdown when all scheduled events must be flushed.
 - Tau imports remain inside the optional default loader so `import retail_agent` works with an
   injected compatible runtime.
 - Tau's wheel omits benchmark data. `TAU2_DATA_DIR` must point to the pinned checkout's `data/`.
-- LiveKit Inference is the default model route. Direct provider construction stays at the
-  `AgentSession` boundary.
-- OpenRouter can be selected for the LLM with `RETAIL_LLM_PROVIDER=openrouter`; STT and TTS
-  continue to use LiveKit Inference model descriptors.
+- Direct Deepgram is the only speech-provider route. `DeepgramSpeechProvider` constructs both
+  STT and TTS at the `AgentSession` boundary using `DEEPGRAM_API_KEY`.
+- OpenRouter can be selected for the LLM with `RETAIL_LLM_PROVIDER=openrouter`; speech remains
+  on direct Deepgram.
 - Unit and integration checks validate code contracts; behavioral evaluation uses real voice in
   Module 2 rather than test-based dialogue simulations.

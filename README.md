@@ -11,7 +11,8 @@ This repository implements the initial boundaries for:
 
 ## Implemented boundary
 
-- `LiveKit AgentSession` owns VAD, STT, LLM, TTS, interruptions, and room I/O.
+- `LiveKit AgentSession` owns VAD, the direct Deepgram STT/TTS clients, LLM, interruptions, and
+  room I/O.
 - `RetailSupportAgent` owns the injected instructions and per-run metadata.
 - `TauToolAdapter` preserves tau tool names and JSON schemas, serializes results, and emits
   non-blocking structured events.

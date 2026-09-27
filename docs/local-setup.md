@@ -2,7 +2,8 @@
 
 ## Install
 
-Requirements: `uv`, Git, and a LiveKit Cloud project. The project uses Python 3.12.
+Requirements: `uv`, Git, a LiveKit Cloud project, and a Deepgram API key. The project uses
+Python 3.12.
 
 ```bash
 uv python install 3.12
@@ -23,8 +24,8 @@ git -C .external/tau2-bench checkout b7ea9074c1cba482b30687fecdb5c8425fd6f619
 
 ## Configure LiveKit
 
-The default pipeline uses LiveKit Inference for STT, LLM, and TTS. It needs LiveKit server
-credentials but no separate model-provider tokens.
+The default pipeline uses direct Deepgram for STT and TTS and LiveKit Inference for the LLM. It
+needs LiveKit server credentials and a Deepgram API key.
 
 Install live kit using [live kit setup docs](https://docs.livekit.io/reference/developer-tools/livekit-cli/#setup)
 
@@ -39,6 +40,7 @@ This writes `.env.local`. Add the non-secret settings from `.env.example` and se
 LIVEKIT_URL=wss://your-project.livekit.cloud
 LIVEKIT_API_KEY=...
 LIVEKIT_API_SECRET=...
+DEEPGRAM_API_KEY=...
 TAU2_DATA_DIR=/absolute/path/to/retail-agent-bench/.external/tau2-bench/data
 ```
 
@@ -109,14 +111,14 @@ RETAIL_BINDINGS_FACTORY=my_runtime:build_bindings
 
 The factory runs once per room. Do not reuse a mutable DB between evaluations.
 
-Direct provider plugins are optional:
+Optional LLM provider plugins are installed with:
 
 ```bash
 uv sync --extra tau --extra providers --extra dev
 ```
 
-To use OpenRouter for the LLM while keeping STT and TTS on LiveKit Inference, set these values
-in `.env.local` after installing the providers extra:
+To use OpenRouter for the LLM while keeping STT and TTS on direct Deepgram, set these values in
+`.env.local` after installing the providers extra:
 
 ```dotenv
 OPENROUTER_API_KEY=your-openrouter-key
@@ -126,18 +128,14 @@ EVAL_LLM_PROVIDER=openrouter
 EVAL_LLM_MODEL=openrouter/auto
 ```
 
-`RETAIL_STT_MODEL`, `RETAIL_TTS_MODEL`, `EVAL_STT_MODEL`, and `EVAL_TTS_MODEL` remain LiveKit
-Inference descriptors. The provider switch is lazy, so the default `livekit` configuration does
-not import the optional OpenAI plugin.
+`RETAIL_STT_MODEL`, `RETAIL_STT_LANGUAGE`, and `RETAIL_TTS_MODEL` select the direct Deepgram
+models used by the retail agent. Their `EVAL_` equivalents independently select models for the
+evaluator caller, while both paths use the same provider implementation and API key. The
+OpenRouter switch is lazy, so the default `livekit` LLM configuration does not import the
+optional OpenAI plugin.
 
-For other direct providers, set the relevant token, such as `OPENAI_API_KEY`, `DEEPGRAM_API_KEY`,
-or `CARTESIA_API_KEY`, and construct the `AgentSession` at the runtime boundary. The included
-session factory uses LiveKit Inference for those providers unless explicitly configured otherwise.
-
-Module 2 has a separate evaluator pipeline. Environment model descriptors configure its
-LiveKit Inference defaults. Code that instantiates `LiveKitTrialRunner` may instead pass a
-`pipeline_factory` returning `EvaluatorPipeline` with provider-specific STT, LLM, TTS, and VAD
-objects. This is the switch point for moving either side off free LiveKit Inference credits.
+Code that instantiates `LiveKitTrialRunner` may still pass a `pipeline_factory` returning an
+`EvaluatorPipeline` for specialized tests.
 
 ## Verify
 

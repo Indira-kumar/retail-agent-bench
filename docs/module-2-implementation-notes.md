@@ -88,10 +88,11 @@ turn them into focused custom evals.
 ## Provider replacement
 
 Retail-agent providers remain configured through `VoicePipelineConfig`. The evaluator caller
-has independent `EVAL_STT_MODEL`, `EVAL_LLM_MODEL`, and `EVAL_TTS_MODEL` descriptors. Set
-`EVAL_LLM_PROVIDER=openrouter` to use OpenRouter only for evaluator LLM calls; evaluator STT and
-TTS remain on LiveKit Inference.
+has independent `EVAL_STT_MODEL`, `EVAL_STT_LANGUAGE`, `EVAL_LLM_MODEL`, and `EVAL_TTS_MODEL`
+settings. Both paths construct speech clients with the same `DeepgramSpeechProvider` and
+`DEEPGRAM_API_KEY`. Set `EVAL_LLM_PROVIDER=openrouter` to use OpenRouter for evaluator LLM calls;
+evaluator speech remains on direct Deepgram.
 
 `LiveKitTrialRunner(..., pipeline_factory=...)` accepts a factory returning
-`EvaluatorPipeline`. That factory may construct direct-provider implementations after LiveKit
-Inference credits run out; benchmark orchestration, artifacts, and tau scoring do not change.
+`EvaluatorPipeline`. The factory seam remains available for specialized test pipelines;
+benchmark orchestration, artifacts, and tau scoring do not change.

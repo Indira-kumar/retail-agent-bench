@@ -1407,7 +1407,7 @@ name = "retail-agent-bench"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "livekit-agents" },
+    { name = "livekit-agents", extra = ["deepgram"] },
     { name = "pydantic" },
     { name = "python-dotenv" },
 ]
@@ -1420,7 +1420,7 @@ dev = [
     { name = "ruff" },
 ]
 providers = [
-    { name = "livekit-agents", extra = ["cartesia", "deepgram", "openai"] },
+    { name = "livekit-agents", extra = ["cartesia", "openai"] },
 ]
 tau = [
     { name = "tau2" },
@@ -1429,8 +1429,8 @@ tau = [
 
 [package.metadata]
 requires-dist = [
-    { name = "livekit-agents", specifier = "==1.8.3" },
-    { name = "livekit-agents", extras = ["cartesia", "deepgram", "openai"], marker = "extra == 'providers'", specifier = "==1.8.3" },
+    { name = "livekit-agents", extras = ["deepgram"], specifier = "==1.8.3" },
+    { name = "livekit-agents", extras = ["cartesia", "openai"], marker = "extra == 'providers'", specifier = "==1.8.3" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.18,<2" },
     { name = "pydantic", specifier = ">=2.11,<3" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4,<9" },

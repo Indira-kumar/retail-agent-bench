@@ -9,7 +9,7 @@ description = "A LiveKit-native retail support voice agent with runtime-injected
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-  "livekit-agents==1.8.3",
+  "livekit-agents[deepgram]==1.8.3",
   "pydantic>=2.11,<3",
   "python-dotenv>=1.1,<2",
 ]
@@ -20,7 +20,7 @@ tau = [
   "websockets>=13,<17",
 ]
 providers = [
-  "livekit-agents[cartesia,deepgram,openai]==1.8.3",
+  "livekit-agents[cartesia,openai]==1.8.3",
 ]
 dev = [
   "mypy>=1.18,<2",

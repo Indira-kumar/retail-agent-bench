@@ -8,9 +8,10 @@ from typing import Literal
 
 from retail_agent.model_providers import LLMProvider, parse_llm_provider
 
-DEFAULT_STT_MODEL = "assemblyai/universal-3-5-pro:en"
+DEFAULT_STT_MODEL = "nova-3"
+DEFAULT_STT_LANGUAGE = "en-US"
 DEFAULT_LLM_MODEL = "google/gemma-4-31b-it"
-DEFAULT_TTS_MODEL = "fishaudio/s2.1-pro:fa4c9eb3dccc4806b382b40d61c6b10a"
+DEFAULT_TTS_MODEL = "aura-2-andromeda-en"
 DEFAULT_VAD_MODEL: Literal["silero"] = "silero"
 DEFAULT_MIN_ENDPOINTING_DELAY = 0.5
 DEFAULT_MAX_ENDPOINTING_DELAY = 3.0
@@ -50,11 +51,12 @@ class RetailAgentConfig:
 class VoicePipelineConfig:
     """LiveKit voice-pipeline settings.
 
-    STT and TTS model strings always use LiveKit Inference. The LLM can use either a LiveKit
-    Inference descriptor or the OpenRouter provider plugin via ``llm_provider``.
+    STT and TTS use the direct Deepgram provider. The LLM can use either a LiveKit Inference
+    descriptor or the OpenRouter provider plugin via ``llm_provider``.
     """
 
     stt: str = DEFAULT_STT_MODEL
+    stt_language: str = DEFAULT_STT_LANGUAGE
     llm: str = DEFAULT_LLM_MODEL
     tts: str = DEFAULT_TTS_MODEL
     vad_model: Literal["silero"] = DEFAULT_VAD_MODEL
@@ -65,8 +67,14 @@ class VoicePipelineConfig:
     llm_provider: LLMProvider = "livekit"
 
     def __post_init__(self) -> None:
-        if not self.stt or not self.llm or not self.tts or not self.vad_model:
-            raise ValueError("STT, LLM, TTS, and VAD model identifiers must be non-empty")
+        if (
+            not self.stt
+            or not self.stt_language
+            or not self.llm
+            or not self.tts
+            or not self.vad_model
+        ):
+            raise ValueError("STT, STT language, LLM, TTS, and VAD values must be non-empty")
         if self.llm_provider not in {"livekit", "openrouter"}:
             raise ValueError("llm_provider must be 'livekit' or 'openrouter'")
         if self.min_endpointing_delay < 0:
@@ -83,6 +91,7 @@ class VoicePipelineConfig:
             raise ValueError("RETAIL_VAD_MODEL must be 'silero'")
         return cls(
             stt=os.getenv("RETAIL_STT_MODEL", DEFAULT_STT_MODEL),
+            stt_language=os.getenv("RETAIL_STT_LANGUAGE", DEFAULT_STT_LANGUAGE),
             llm=os.getenv("RETAIL_LLM_MODEL", DEFAULT_LLM_MODEL),
             llm_provider=parse_llm_provider(
                 os.getenv("RETAIL_LLM_PROVIDER"), variable="RETAIL_LLM_PROVIDER"

@@ -11,7 +11,7 @@ from livekit.agents.voice.events import EventTypes
 from retail_agent.agent import RetailSupportAgent
 from retail_agent.config import VoicePipelineConfig
 from retail_agent.events import EventKind, EventSource, event_payload
-from retail_agent.model_providers import build_llm
+from retail_agent.model_providers import DeepgramSpeechProvider, build_llm
 from retail_agent.tools.contracts import ToolSource
 
 
@@ -31,10 +31,15 @@ def create_livekit_session(
     config: VoicePipelineConfig | None = None,
 ) -> AgentSession[Any]:
     pipeline = config or VoicePipelineConfig()
+    speech = DeepgramSpeechProvider().build(
+        stt_model=pipeline.stt,
+        tts_model=pipeline.tts,
+        language=pipeline.stt_language,
+    )
     session: AgentSession[Any] = AgentSession(
-        stt=pipeline.stt,
+        stt=speech.stt,
         llm=build_llm(provider=pipeline.llm_provider, model=pipeline.llm),
-        tts=pipeline.tts,
+        tts=speech.tts,
         vad=inference.VAD(model=pipeline.vad_model),
         turn_handling=TurnHandlingOptions(
             turn_detection="vad",
@@ -52,9 +57,12 @@ def create_livekit_session(
     agent.event_emitter.emit(
         EventKind.SESSION_CREATED,
         EventSource.SESSION,
+        stt_provider="deepgram",
         stt=str(pipeline.stt),
+        stt_language=pipeline.stt_language,
         llm=str(pipeline.llm),
         llm_provider=pipeline.llm_provider,
+        tts_provider="deepgram",
         tts=str(pipeline.tts),
         vad=str(pipeline.vad_model),
         turn_detection="vad",

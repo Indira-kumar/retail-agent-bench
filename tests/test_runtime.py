@@ -35,6 +35,7 @@ class CapturingSession:
 
 
 def test_session_uses_vad_only_turn_handling(monkeypatch: Any) -> None:
+    monkeypatch.setenv("DEEPGRAM_API_KEY", "test-key")
     monkeypatch.setattr(runtime_module, "AgentSession", CapturingSession)
     monkeypatch.setattr(runtime_module.inference, "VAD", lambda **kwargs: kwargs)
     agent = create_retail_agent(policy="Test policy", tools=[NoopTool()])
@@ -47,3 +48,5 @@ def test_session_uses_vad_only_turn_handling(monkeypatch: Any) -> None:
     assert turn_handling["preemptive_generation"]["enabled"] is False
     assert session.options["max_tool_steps"] == 8
     assert session.options["vad"] == {"model": "silero"}
+    assert session.options["stt"].provider == "Deepgram"
+    assert session.options["tts"].provider == "Deepgram"
