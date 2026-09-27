@@ -1,0 +1,103 @@
+{
+  "id": "5",
+  "description": {
+    "purpose": null,
+    "relevant_policies": null,
+    "notes": null
+  },
+  "user_scenario": {
+    "persona": null,
+    "instructions": {
+      "domain": "retail",
+      "reason_for_call": "You want to exchange the water bottle and the desk lamp. You want to exchange the water bottle to a bigger one, and the desk lamp to a less bright one (prefer battery > USB > AC). If the agent asks for confirmation, only exchange the desk lamp. If the agent asks for confirmation again, do not exchange anything, and return the water bottle instead.",
+      "known_info": "You are mei_kovacs_8020 in zipcode 28236.",
+      "unknown_info": "You do not remember your email address",
+      "task_instructions": "."
+    }
+  },
+  "ticket": null,
+  "initial_state": null,
+  "evaluation_criteria": {
+    "actions": [
+      {
+        "action_id": "5_0",
+        "requestor": "assistant",
+        "name": "find_user_id_by_name_zip",
+        "arguments": {
+          "first_name": "Mei",
+          "last_name": "Kovacs",
+          "zip": "28236"
+        },
+        "info": null,
+        "compare_args": null
+      },
+      {
+        "action_id": "5_1",
+        "requestor": "assistant",
+        "name": "get_user_details",
+        "arguments": {
+          "user_id": "mei_kovacs_8020"
+        },
+        "info": null,
+        "compare_args": null
+      },
+      {
+        "action_id": "5_2",
+        "requestor": "assistant",
+        "name": "get_order_details",
+        "arguments": {
+          "order_id": "#W6390527"
+        },
+        "info": null,
+        "compare_args": null
+      },
+      {
+        "action_id": "5_3",
+        "requestor": "assistant",
+        "name": "get_product_details",
+        "arguments": {
+          "product_id": "6817146515"
+        },
+        "info": null,
+        "compare_args": null
+      },
+      {
+        "action_id": "5_4",
+        "requestor": "assistant",
+        "name": "return_delivered_order_items",
+        "arguments": {
+          "order_id": "#W6390527",
+          "item_ids": [
+            "8538875209"
+          ],
+          "payment_method_id": "paypal_7644869"
+        },
+        "info": null,
+        "compare_args": null
+      }
+    ],
+    "env_assertions": null,
+    "communicate_info": [],
+    "nl_assertions": null,
+    "reward_basis": [
+      "DB",
+      "NL_ASSERTION"
+    ]
+  },
+  "issues": [
+    {
+      "id": "issue_770466c1",
+      "title": "Domain level issue. Agent is allowed to do user level actions e.g. look-up their order info, without authenticating the user. The tool should throw an error if user has not been authenticated yet.",
+      "description": "See above.",
+      "status": "open",
+      "resolution": null,
+      "created_at": "2026-01-16",
+      "resolved_at": null,
+      "author_email": "keshav@sierra.ai",
+      "pr_link": null,
+      "simulation_file": "task_issues/task_5_issue_770466c1.json"
+    }
+  ],
+  "required_documents": null,
+  "user_tools": null
+}

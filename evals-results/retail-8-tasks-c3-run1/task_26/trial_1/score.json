@@ -1,0 +1,157 @@
+{
+  "reward": 1.0,
+  "db_check": {
+    "db_match": true,
+    "db_reward": 1.0
+  },
+  "env_assertions": [],
+  "action_checks": [
+    {
+      "action": {
+        "action_id": "26_0",
+        "requestor": "assistant",
+        "name": "find_user_id_by_name_zip",
+        "arguments": {
+          "first_name": "Isabella",
+          "last_name": "Johansson",
+          "zip": "32286"
+        },
+        "info": null,
+        "compare_args": null
+      },
+      "action_match": true,
+      "action_reward": 1.0,
+      "tool_type": "read"
+    },
+    {
+      "action": {
+        "action_id": "26_1",
+        "requestor": "assistant",
+        "name": "get_user_details",
+        "arguments": {
+          "user_id": "isabella_johansson_2152"
+        },
+        "info": null,
+        "compare_args": null
+      },
+      "action_match": true,
+      "action_reward": 1.0,
+      "tool_type": "read"
+    },
+    {
+      "action": {
+        "action_id": "26_2",
+        "requestor": "assistant",
+        "name": "get_order_details",
+        "arguments": {
+          "order_id": "#W3792453"
+        },
+        "info": null,
+        "compare_args": null
+      },
+      "action_match": true,
+      "action_reward": 1.0,
+      "tool_type": "read"
+    },
+    {
+      "action": {
+        "action_id": "26_3",
+        "requestor": "assistant",
+        "name": "get_order_details",
+        "arguments": {
+          "order_id": "#W7181492"
+        },
+        "info": null,
+        "compare_args": null
+      },
+      "action_match": true,
+      "action_reward": 1.0,
+      "tool_type": "read"
+    },
+    {
+      "action": {
+        "action_id": "26_4",
+        "requestor": "assistant",
+        "name": "get_order_details",
+        "arguments": {
+          "order_id": "#W5565470"
+        },
+        "info": null,
+        "compare_args": null
+      },
+      "action_match": true,
+      "action_reward": 1.0,
+      "tool_type": "read"
+    },
+    {
+      "action": {
+        "action_id": "26_5",
+        "requestor": "assistant",
+        "name": "get_order_details",
+        "arguments": {
+          "order_id": "#W2575533"
+        },
+        "info": null,
+        "compare_args": null
+      },
+      "action_match": true,
+      "action_reward": 1.0,
+      "tool_type": "read"
+    },
+    {
+      "action": {
+        "action_id": "26_6",
+        "requestor": "assistant",
+        "name": "return_delivered_order_items",
+        "arguments": {
+          "order_id": "#W5565470",
+          "item_ids": [
+            "7602931732",
+            "9570044148"
+          ],
+          "payment_method_id": "paypal_3024827"
+        },
+        "info": null,
+        "compare_args": null
+      },
+      "action_match": true,
+      "action_reward": 1.0,
+      "tool_type": "write"
+    },
+    {
+      "action": {
+        "action_id": "26_7",
+        "requestor": "assistant",
+        "name": "transfer_to_human_agents",
+        "arguments": {
+          "summary": "The user wants to refund to the amex credit card, but the agent cannot help."
+        },
+        "info": null,
+        "compare_args": []
+      },
+      "action_match": false,
+      "action_reward": 0.0,
+      "tool_type": "generic"
+    }
+  ],
+  "nl_assertions": [],
+  "communicate_checks": null,
+  "reward_basis": [
+    "DB",
+    "NL_ASSERTION"
+  ],
+  "reward_breakdown": {
+    "DB": 1.0,
+    "NL_ASSERTION": 1.0
+  },
+  "info": {
+    "env": null,
+    "nl": {
+      "note": "No nl_assertions to evaluate"
+    },
+    "communicate": {
+      "note": "No communicate_info to evaluate"
+    },
+    "action": null
+  }
+}
