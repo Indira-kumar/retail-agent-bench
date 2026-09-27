@@ -1,0 +1,13 @@
+{
+  "reward": 0.0,
+  "db_check": null,
+  "env_assertions": null,
+  "action_checks": null,
+  "nl_assertions": null,
+  "communicate_checks": null,
+  "reward_basis": null,
+  "reward_breakdown": null,
+  "info": {
+    "note": "Simulation terminated prematurely. Termination reason: infrastructure_error"
+  }
+}

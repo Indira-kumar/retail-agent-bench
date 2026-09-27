@@ -1,0 +1,197 @@
+[
+  {
+    "run_id": "task-27-trial-1-b1fb8ceb",
+    "task_id": "27",
+    "trial": 1,
+    "reward": 0.0,
+    "termination_reason": "infrastructure_error",
+    "duration_seconds": 0.29349887499120086,
+    "failure_labels": [
+      "infrastructure_error"
+    ],
+    "artifact_path": "task_27/trial_1",
+    "livekit_room": "retail-eval-task-27-trial-1-b1fb8ceb"
+  },
+  {
+    "run_id": "task-27-trial-2-0e26a0a6",
+    "task_id": "27",
+    "trial": 2,
+    "reward": 0.0,
+    "termination_reason": "infrastructure_error",
+    "duration_seconds": 0.2114201249933103,
+    "failure_labels": [
+      "infrastructure_error"
+    ],
+    "artifact_path": "task_27/trial_2",
+    "livekit_room": "retail-eval-task-27-trial-2-0e26a0a6"
+  },
+  {
+    "run_id": "task-27-trial-3-3cb14686",
+    "task_id": "27",
+    "trial": 3,
+    "reward": 0.0,
+    "termination_reason": "infrastructure_error",
+    "duration_seconds": 0.20635850001417566,
+    "failure_labels": [
+      "infrastructure_error"
+    ],
+    "artifact_path": "task_27/trial_3",
+    "livekit_room": "retail-eval-task-27-trial-3-3cb14686"
+  },
+  {
+    "run_id": "task-40-trial-1-71976bd1",
+    "task_id": "40",
+    "trial": 1,
+    "reward": 0.0,
+    "termination_reason": "infrastructure_error",
+    "duration_seconds": 0.03276929201092571,
+    "failure_labels": [
+      "infrastructure_error"
+    ],
+    "artifact_path": "task_40/trial_1",
+    "livekit_room": "retail-eval-task-40-trial-1-71976bd1"
+  },
+  {
+    "run_id": "task-40-trial-2-021528da",
+    "task_id": "40",
+    "trial": 2,
+    "reward": 0.0,
+    "termination_reason": "infrastructure_error",
+    "duration_seconds": 0.045379250004771166,
+    "failure_labels": [
+      "infrastructure_error"
+    ],
+    "artifact_path": "task_40/trial_2",
+    "livekit_room": "retail-eval-task-40-trial-2-021528da"
+  },
+  {
+    "run_id": "task-40-trial-3-502e9d84",
+    "task_id": "40",
+    "trial": 3,
+    "reward": 0.0,
+    "termination_reason": "infrastructure_error",
+    "duration_seconds": 0.034166458004619926,
+    "failure_labels": [
+      "infrastructure_error"
+    ],
+    "artifact_path": "task_40/trial_3",
+    "livekit_room": "retail-eval-task-40-trial-3-502e9d84"
+  },
+  {
+    "run_id": "task-49-trial-1-f026c444",
+    "task_id": "49",
+    "trial": 1,
+    "reward": 0.0,
+    "termination_reason": "infrastructure_error",
+    "duration_seconds": 0.025557084009051323,
+    "failure_labels": [
+      "infrastructure_error"
+    ],
+    "artifact_path": "task_49/trial_1",
+    "livekit_room": "retail-eval-task-49-trial-1-f026c444"
+  },
+  {
+    "run_id": "task-49-trial-2-7cf65124",
+    "task_id": "49",
+    "trial": 2,
+    "reward": 0.0,
+    "termination_reason": "infrastructure_error",
+    "duration_seconds": 0.03185029099404346,
+    "failure_labels": [
+      "infrastructure_error"
+    ],
+    "artifact_path": "task_49/trial_2",
+    "livekit_room": "retail-eval-task-49-trial-2-7cf65124"
+  },
+  {
+    "run_id": "task-49-trial-3-f277b8fa",
+    "task_id": "49",
+    "trial": 3,
+    "reward": 0.0,
+    "termination_reason": "infrastructure_error",
+    "duration_seconds": 0.037652916988008656,
+    "failure_labels": [
+      "infrastructure_error"
+    ],
+    "artifact_path": "task_49/trial_3",
+    "livekit_room": "retail-eval-task-49-trial-3-f277b8fa"
+  },
+  {
+    "run_id": "task-51-trial-1-0b9b12e8",
+    "task_id": "51",
+    "trial": 1,
+    "reward": 0.0,
+    "termination_reason": "infrastructure_error",
+    "duration_seconds": 0.02885200000309851,
+    "failure_labels": [
+      "infrastructure_error"
+    ],
+    "artifact_path": "task_51/trial_1",
+    "livekit_room": "retail-eval-task-51-trial-1-0b9b12e8"
+  },
+  {
+    "run_id": "task-51-trial-2-48f5d600",
+    "task_id": "51",
+    "trial": 2,
+    "reward": 0.0,
+    "termination_reason": "infrastructure_error",
+    "duration_seconds": 0.030909124994650483,
+    "failure_labels": [
+      "infrastructure_error"
+    ],
+    "artifact_path": "task_51/trial_2",
+    "livekit_room": "retail-eval-task-51-trial-2-48f5d600"
+  },
+  {
+    "run_id": "task-51-trial-3-7ab8ee56",
+    "task_id": "51",
+    "trial": 3,
+    "reward": 0.0,
+    "termination_reason": "infrastructure_error",
+    "duration_seconds": 0.03384600000572391,
+    "failure_labels": [
+      "infrastructure_error"
+    ],
+    "artifact_path": "task_51/trial_3",
+    "livekit_room": "retail-eval-task-51-trial-3-7ab8ee56"
+  },
+  {
+    "run_id": "task-53-trial-1-cd18b8a8",
+    "task_id": "53",
+    "trial": 1,
+    "reward": 0.0,
+    "termination_reason": "infrastructure_error",
+    "duration_seconds": 0.030530042000464164,
+    "failure_labels": [
+      "infrastructure_error"
+    ],
+    "artifact_path": "task_53/trial_1",
+    "livekit_room": "retail-eval-task-53-trial-1-cd18b8a8"
+  },
+  {
+    "run_id": "task-53-trial-2-ef07be96",
+    "task_id": "53",
+    "trial": 2,
+    "reward": 0.0,
+    "termination_reason": "infrastructure_error",
+    "duration_seconds": 0.03349829200305976,
+    "failure_labels": [
+      "infrastructure_error"
+    ],
+    "artifact_path": "task_53/trial_2",
+    "livekit_room": "retail-eval-task-53-trial-2-ef07be96"
+  },
+  {
+    "run_id": "task-53-trial-3-46e5b10c",
+    "task_id": "53",
+    "trial": 3,
+    "reward": 0.0,
+    "termination_reason": "infrastructure_error",
+    "duration_seconds": 0.025018375003128313,
+    "failure_labels": [
+      "infrastructure_error"
+    ],
+    "artifact_path": "task_53/trial_3",
+    "livekit_room": "retail-eval-task-53-trial-3-46e5b10c"
+  }
+]
