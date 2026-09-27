@@ -1,0 +1,61 @@
+[
+  {
+    "labels": [
+      "db_state_mismatch",
+      "expected_action_missing",
+      "tool_error"
+    ],
+    "count": 2,
+    "task_ids": [
+      "49",
+      "53"
+    ],
+    "run_ids": [
+      "task-49-trial-1-782f2137",
+      "task-53-trial-1-e1d2eada"
+    ],
+    "average_reward": 0.0
+  },
+  {
+    "labels": [
+      "scoring_error",
+      "tool_error"
+    ],
+    "count": 2,
+    "task_ids": [
+      "45",
+      "68"
+    ],
+    "run_ids": [
+      "task-45-trial-1-29c0a8a0",
+      "task-68-trial-1-0d02ca05"
+    ],
+    "average_reward": 0.0
+  },
+  {
+    "labels": [
+      "expected_action_missing"
+    ],
+    "count": 1,
+    "task_ids": [
+      "33"
+    ],
+    "run_ids": [
+      "task-33-trial-1-2f5e141f"
+    ],
+    "average_reward": 1.0
+  },
+  {
+    "labels": [
+      "timeout"
+    ],
+    "count": 1,
+    "task_ids": [
+      "101"
+    ],
+    "run_ids": [
+      "task-101-trial-1-ef6fb580"
+    ],
+    "average_reward": 0.0
+  }
+]

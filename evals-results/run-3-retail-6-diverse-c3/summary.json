@@ -1,0 +1,86 @@
+[
+  {
+    "run_id": "task-33-trial-1-2f5e141f",
+    "task_id": "33",
+    "trial": 1,
+    "reward": 1.0,
+    "termination_reason": "user_stop",
+    "duration_seconds": 235.77846808299364,
+    "failure_labels": [
+      "expected_action_missing"
+    ],
+    "artifact_path": "task_33/trial_1",
+    "livekit_room": "retail-eval-task-33-trial-1-2f5e141f"
+  },
+  {
+    "run_id": "task-45-trial-1-29c0a8a0",
+    "task_id": "45",
+    "trial": 1,
+    "reward": null,
+    "termination_reason": "user_stop",
+    "duration_seconds": 363.07030524998845,
+    "failure_labels": [
+      "scoring_error",
+      "tool_error"
+    ],
+    "artifact_path": "task_45/trial_1",
+    "livekit_room": "retail-eval-task-45-trial-1-29c0a8a0"
+  },
+  {
+    "run_id": "task-49-trial-1-782f2137",
+    "task_id": "49",
+    "trial": 1,
+    "reward": 0.0,
+    "termination_reason": "agent_stop",
+    "duration_seconds": 191.34614904200134,
+    "failure_labels": [
+      "db_state_mismatch",
+      "expected_action_missing",
+      "tool_error"
+    ],
+    "artifact_path": "task_49/trial_1",
+    "livekit_room": "retail-eval-task-49-trial-1-782f2137"
+  },
+  {
+    "run_id": "task-53-trial-1-e1d2eada",
+    "task_id": "53",
+    "trial": 1,
+    "reward": 0.0,
+    "termination_reason": "agent_stop",
+    "duration_seconds": 128.14620262499375,
+    "failure_labels": [
+      "db_state_mismatch",
+      "expected_action_missing",
+      "tool_error"
+    ],
+    "artifact_path": "task_53/trial_1",
+    "livekit_room": "retail-eval-task-53-trial-1-e1d2eada"
+  },
+  {
+    "run_id": "task-68-trial-1-0d02ca05",
+    "task_id": "68",
+    "trial": 1,
+    "reward": null,
+    "termination_reason": "user_stop",
+    "duration_seconds": 136.17999733399483,
+    "failure_labels": [
+      "scoring_error",
+      "tool_error"
+    ],
+    "artifact_path": "task_68/trial_1",
+    "livekit_room": "retail-eval-task-68-trial-1-0d02ca05"
+  },
+  {
+    "run_id": "task-101-trial-1-ef6fb580",
+    "task_id": "101",
+    "trial": 1,
+    "reward": 0.0,
+    "termination_reason": "timeout",
+    "duration_seconds": 372.23883200000273,
+    "failure_labels": [
+      "timeout"
+    ],
+    "artifact_path": "task_101/trial_1",
+    "livekit_room": "retail-eval-task-101-trial-1-ef6fb580"
+  }
+]
