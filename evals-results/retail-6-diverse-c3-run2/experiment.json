@@ -1,0 +1,31 @@
+{
+  "experiment_id": "retail-6-diverse-c3-run2",
+  "created_at": "2026-09-27T14:43:01.620413+00:00",
+  "task_ids": [
+    "17",
+    "40",
+    "51",
+    "55",
+    "62",
+    "90"
+  ],
+  "trials": 1,
+  "config": {
+    "livekit_url": "wss://retail-agent-e9imynjo.livekit.cloud",
+    "agent_name": "retail-support-agent",
+    "output_dir": "eval-runs",
+    "concurrency": 3,
+    "task_timeout_seconds": 360.0,
+    "report_timeout_seconds": 20.0,
+    "evaluator_stt": "nova-3",
+    "evaluator_stt_language": "en-US",
+    "evaluator_llm": "google/gemma-4-31b-it",
+    "evaluator_tts": "aura-2-athena-en",
+    "evaluator_vad": "silero",
+    "evaluator_llm_provider": "openrouter",
+    "scorer_llm": "openrouter/google/gemma-4-31b-it",
+    "stt_max_retry": 5,
+    "stt_retry_interval": 1.0,
+    "stt_connect_timeout": 10.0
+  }
+}

@@ -1,0 +1,85 @@
+[
+  {
+    "run_id": "task-17-trial-1-b612d1fe",
+    "task_id": "17",
+    "trial": 1,
+    "reward": 1.0,
+    "termination_reason": "user_stop",
+    "duration_seconds": 237.48583783299546,
+    "failure_labels": [
+      "expected_action_missing"
+    ],
+    "artifact_path": "task_17/trial_1",
+    "livekit_room": "retail-eval-task-17-trial-1-b612d1fe"
+  },
+  {
+    "run_id": "task-40-trial-1-5f43b83d",
+    "task_id": "40",
+    "trial": 1,
+    "reward": null,
+    "termination_reason": "agent_stop",
+    "duration_seconds": 181.80739662500855,
+    "failure_labels": [
+      "scoring_error",
+      "tool_error"
+    ],
+    "artifact_path": "task_40/trial_1",
+    "livekit_room": "retail-eval-task-40-trial-1-5f43b83d"
+  },
+  {
+    "run_id": "task-51-trial-1-28b7e8f6",
+    "task_id": "51",
+    "trial": 1,
+    "reward": 0.0,
+    "termination_reason": "agent_stop",
+    "duration_seconds": 260.6234811250033,
+    "failure_labels": [
+      "db_state_mismatch",
+      "expected_action_missing",
+      "tool_error"
+    ],
+    "artifact_path": "task_51/trial_1",
+    "livekit_room": "retail-eval-task-51-trial-1-28b7e8f6"
+  },
+  {
+    "run_id": "task-55-trial-1-efc0dd83",
+    "task_id": "55",
+    "trial": 1,
+    "reward": 0.0,
+    "termination_reason": "timeout",
+    "duration_seconds": 374.43580383301014,
+    "failure_labels": [
+      "timeout",
+      "tool_error"
+    ],
+    "artifact_path": "task_55/trial_1",
+    "livekit_room": "retail-eval-task-55-trial-1-efc0dd83"
+  },
+  {
+    "run_id": "task-62-trial-1-2fcdff4c",
+    "task_id": "62",
+    "trial": 1,
+    "reward": null,
+    "termination_reason": "user_stop",
+    "duration_seconds": 352.9275937499915,
+    "failure_labels": [
+      "scoring_error",
+      "session_error"
+    ],
+    "artifact_path": "task_62/trial_1",
+    "livekit_room": "retail-eval-task-62-trial-1-2fcdff4c"
+  },
+  {
+    "run_id": "task-90-trial-1-9f2ff37d",
+    "task_id": "90",
+    "trial": 1,
+    "reward": 1.0,
+    "termination_reason": "user_stop",
+    "duration_seconds": 313.3308628750092,
+    "failure_labels": [
+      "tool_error"
+    ],
+    "artifact_path": "task_90/trial_1",
+    "livekit_room": "retail-eval-task-90-trial-1-9f2ff37d"
+  }
+]
