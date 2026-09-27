@@ -4,21 +4,66 @@ from __future__ import annotations
 
 import asyncio
 import importlib
+import logging
 import os
 from collections.abc import Callable
-from typing import cast
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, cast
 
 from dotenv import load_dotenv
-from livekit import agents
-from livekit.agents import AgentServer
+from livekit import agents, rtc
+from livekit.agents import AgentServer, AgentSession
 
 from retail_agent.agent import create_retail_agent
 from retail_agent.config import RetailAgentConfig, VoicePipelineConfig
 from retail_agent.runtime import RuntimeBindings, create_livekit_session
+from retail_agent.trace_transport import RoomEventPublisher, decode_control_message
+
+if TYPE_CHECKING:
+    from retail_agent.agent import RetailSupportAgent
 
 load_dotenv(".env.local")
 
+logger = logging.getLogger(__name__)
 server = AgentServer()
+
+
+@dataclass(slots=True)
+class ActiveSession:
+    agent: RetailSupportAgent
+    session: AgentSession[Any]
+    publisher: RoomEventPublisher | None
+
+
+_active_sessions: dict[str, ActiveSession] = {}
+
+
+def _trace_events_enabled() -> bool:
+    return os.getenv("RETAIL_TRACE_EVENTS", "1").lower() not in {"0", "false", "no"}
+
+
+async def _on_session_end(ctx: agents.JobContext) -> None:
+    active = _active_sessions.pop(ctx.room.name, None)
+    if active is None:
+        return
+
+    agent = active.agent
+    session = active.session
+    await agent.event_emitter.drain()
+    if active.publisher is not None:
+        try:
+            report = ctx.make_session_report(session).to_dict()
+            await active.publisher.publish(
+                {
+                    "message_type": "session_report",
+                    "session_id": agent.retail_state.session_id,
+                    "report": report,
+                }
+            )
+        except Exception:
+            logger.exception("Could not publish the final session report for %s", ctx.room.name)
+        finally:
+            active.publisher.close()
 
 
 def load_runtime_bindings() -> RuntimeBindings:
@@ -37,22 +82,48 @@ def load_runtime_bindings() -> RuntimeBindings:
     return bindings
 
 
-@server.rtc_session()
+@server.rtc_session(
+    agent_name=os.getenv("LIVEKIT_AGENT_NAME", "retail-support-agent"),
+    on_session_end=_on_session_end,
+)
 async def retail_voice_agent(ctx: agents.JobContext) -> None:
     bindings = await asyncio.to_thread(load_runtime_bindings)
     behavior = RetailAgentConfig()
+    publisher = RoomEventPublisher(ctx.room) if _trace_events_enabled() else None
     agent = create_retail_agent(
         policy=bindings.policy,
         tools=bindings.tools,
         config=behavior,
+        event_sink=publisher,
         session_id=ctx.room.name,
     )
     session = create_livekit_session(
         agent=agent,
         config=VoicePipelineConfig.from_env(),
     )
-    await session.start(room=ctx.room, agent=agent)
-    await session.generate_reply(instructions=behavior.greeting_instructions)
+    _active_sessions[ctx.room.name] = ActiveSession(
+        agent=agent,
+        session=session,
+        publisher=publisher,
+    )
+
+    @ctx.room.on("data_received")
+    def on_data_received(packet: rtc.DataPacket) -> None:
+        message = decode_control_message(packet)
+        if message is not None and message.get("message_type") == "evaluation.stop":
+            session.shutdown(drain=True)
+
+    try:
+        await session.start(room=ctx.room, agent=agent)
+        if publisher is not None:
+            publisher.start()
+        await session.generate_reply(instructions=behavior.greeting_instructions)
+    except BaseException:
+        _active_sessions.pop(ctx.room.name, None)
+        if publisher is not None:
+            publisher.close()
+        await agent.event_emitter.drain()
+        raise
 
 
 def main() -> None:

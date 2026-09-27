@@ -24,10 +24,13 @@ For each LiveKit room:
    policy prompt.
 3. `create_livekit_session` configures LiveKit Inference and pure Silero VAD handling.
 4. LiveKit starts the agent in the room and owns the voice/tool execution loop.
-5. Module 2 may consume structured events and retain the DB for tau scoring.
+5. Module 2 consumes structured events and replays completed tool calls through tau's evaluator
+   to derive the final DB state.
 
-`RuntimeBindings.db` is for evaluators and scoring. `RuntimeBindings.owner` keeps the source
-environment alive. The agent never receives or reads the DB directly.
+`RuntimeBindings.db` is available to an in-process integrator. Module 2 does not share that
+object across LiveKit workers: tau scoring reconstructs final state from the captured tool
+trajectory. `RuntimeBindings.owner` keeps the source environment alive. The agent never receives
+or reads the DB directly.
 
 ## Tool adapter
 

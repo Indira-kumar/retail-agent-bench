@@ -31,9 +31,10 @@ dev = [
 
 [project.scripts]
 retail-voice-agent = "retail_agent.server:main"
+retail-eval = "retail_eval.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/retail_agent"]
+packages = ["src/retail_agent", "src/retail_eval"]
 
 [tool.hatch.metadata]
 allow-direct-references = true
@@ -53,7 +54,7 @@ select = ["ASYNC", "B", "E", "F", "I", "RUF", "SIM", "UP"]
 [tool.mypy]
 python_version = "3.12"
 strict = true
-packages = ["retail_agent"]
+packages = ["retail_agent", "retail_eval"]
 mypy_path = "src"
 
 [[tool.mypy.overrides]]

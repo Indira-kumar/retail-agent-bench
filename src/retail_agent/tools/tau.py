@@ -104,6 +104,7 @@ class TauToolAdapter:
                 tool_name=name,
                 arguments=raw_arguments,
                 result=to_json_value(result),
+                serialized_result=serialized,
                 duration_seconds=monotonic() - started,
             )
             return serialized

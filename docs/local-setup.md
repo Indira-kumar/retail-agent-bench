@@ -62,6 +62,30 @@ Join through the LiveKit Agent Console and speak to the agent. Local microphone-
 also available with `uv run retail-voice-agent console`; evaluation must use a real LiveKit room.
 Every room receives fresh tau runtime bindings.
 
+## Run Module 2
+
+Keep the named retail worker running, then use a second terminal:
+
+```bash
+uv run retail-eval list-tasks --split test
+uv run retail-eval run \
+  --selection-file eval-selection.json \
+  --trials 1 \
+  --concurrency 3
+```
+
+The selection file is either a JSON list or an object:
+
+```json
+{
+  "task_ids": ["task-id-1", "task-id-2", "task-id-3"]
+}
+```
+
+Select 20–30 tasks for a full benchmark. Start with one task and `--concurrency 1` to validate
+credentials and agent dispatch. Module 2 accepts at most five concurrent rooms. Results are
+written under `eval-runs/<experiment-id>/` by default.
+
 ## Optional configuration
 
 Model and VAD settings live in `.env.example`. `RETAIL_VAD_MODEL` must remain `silero`; Module 1
@@ -94,6 +118,11 @@ uv sync --extra providers
 Set the provider's token, such as `OPENAI_API_KEY`, `DEEPGRAM_API_KEY`, or `CARTESIA_API_KEY`,
 and construct the `AgentSession` at the runtime boundary. The included session factory uses
 LiveKit Inference and ignores direct provider tokens.
+
+Module 2 has a separate evaluator pipeline. Environment model descriptors configure its
+LiveKit Inference defaults. Code that instantiates `LiveKitTrialRunner` may instead pass a
+`pipeline_factory` returning `EvaluatorPipeline` with provider-specific STT, LLM, TTS, and VAD
+objects. This is the switch point for moving either side off free LiveKit Inference credits.
 
 ## Verify
 
