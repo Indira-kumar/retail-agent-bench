@@ -50,6 +50,23 @@ uv run retail-eval run --task-ids 5,9,12 --concurrency 3
 
 Use task IDs printed by `list-tasks` when creating the final 20–30-task selection.
 
+## Trajectory visualizer
+
+Open any completed experiment directory in the local visualizer:
+
+```bash
+uv run retail-eval visualize evals-results/retail-8-tasks-c3
+```
+
+The task rail summarizes every task and trial in `summary.json`. The trajectory view merges
+timestamped transcript messages, tool calls, tool results, and tool failures from `events.jsonl`.
+It also exposes the recorded audio channels, expected action checks, failure labels, and the
+policy sections selected for that task. Use **All logs** when the full LiveKit event stream is
+needed; the default view keeps the review focused on conversation and tool activity.
+
+The server binds to `127.0.0.1:8765` and opens a browser. Use `--port`, `--host`, or `--no-open`
+to change that behavior.
+
 ## Public API
 
 ```python

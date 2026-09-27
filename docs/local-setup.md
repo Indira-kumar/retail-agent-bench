@@ -88,6 +88,43 @@ Select 20–30 tasks for a full benchmark. Start with one task and `--concurrenc
 credentials and agent dispatch. Module 2 accepts at most five concurrent rooms. Results are
 written under `eval-runs/<experiment-id>/` by default.
 
+## Visualize trajectories
+
+Point the visualizer at a completed experiment directory. The directory must contain
+`experiment.json` and `summary.json` at its root:
+
+```bash
+uv run retail-eval visualize eval-runs/<experiment-id>
+```
+
+For the checked-in example run:
+
+```bash
+uv run retail-eval visualize evals-results/retail-8-tasks-c3
+```
+
+The command starts a local server at `http://127.0.0.1:8765` and opens the visualizer in a
+browser. Select a task in the left rail, then select a trial in the task header. The available
+views are:
+
+- **Trajectory** — the timestamped STT transcript, LLM/TTS responses, tool calls, tool results,
+  and tool failures from `events.jsonl`. Switch to **All logs** to include the complete LiveKit
+  event stream.
+- **Evaluation** — expected action checks, failure labels, and the reward breakdown from
+  `score.json` and `failure.json`.
+- **Relevant policy** — the policy sections selected for the task from `relevant_policy.json`.
+
+The customer and agent audio players read `input.wav` and `output.wav` from the selected trial.
+Task and trajectory search filters are applied locally and do not modify the artifacts.
+
+Use a different port or prevent the browser from opening automatically when needed:
+
+```bash
+uv run retail-eval visualize eval-runs/<experiment-id> --port 9000 --no-open
+```
+
+Stop the local server with `Ctrl-C`.
+
 ## Optional configuration
 
 Model and VAD settings live in `.env.example`. `RETAIL_VAD_MODEL` must remain `silero`; Module 1

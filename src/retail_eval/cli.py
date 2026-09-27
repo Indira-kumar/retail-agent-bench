@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 from retail_eval.config import BenchmarkConfig
 from retail_eval.runner import BenchmarkRunner
 from retail_eval.tasks import list_retail_tasks, load_retail_policy, load_retail_tasks
+from retail_eval.visualizer import serve_visualizer
 
 
 def main() -> None:
@@ -24,6 +25,14 @@ def main() -> None:
     )
     if args.command == "list-tasks":
         _list_tasks(args.split)
+        return
+    if args.command == "visualize":
+        serve_visualizer(
+            results_dir=args.results,
+            host=args.host,
+            port=args.port,
+            open_browser=not args.no_open,
+        )
         return
     asyncio.run(_run(args))
 
@@ -94,6 +103,12 @@ def _parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--timeout", type=float, default=360.0)
     run_parser.add_argument("--output", type=Path, default=Path("eval-runs"))
     run_parser.add_argument("--experiment-id")
+
+    visualize_parser = commands.add_parser("visualize")
+    visualize_parser.add_argument("results", type=Path)
+    visualize_parser.add_argument("--host", default="127.0.0.1")
+    visualize_parser.add_argument("--port", type=int, default=8765)
+    visualize_parser.add_argument("--no-open", action="store_true")
     return parser
 
 

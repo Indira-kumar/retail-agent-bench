@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light" />
+    <title>Retail trajectory review</title>
+    <link rel="stylesheet" href="/assets/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Experiment overview">
+          <span class="brand-mark" aria-hidden="true">τ</span>
+          <span>
+            <strong>Retail trajectory review</strong>
+            <small id="experiment-name">Loading experiment…</small>
+          </span>
+        </a>
+        <div class="experiment-summary" id="experiment-summary"></div>
+      </header>
+
+      <aside class="task-rail" aria-label="Tasks">
+        <div class="rail-tools">
+          <label class="search-field">
+            <span class="visually-hidden">Search tasks</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.3-4.3m2.3-5.2a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z" /></svg>
+            <input id="task-search" type="search" placeholder="Find a task" autocomplete="off" />
+          </label>
+          <div class="status-filter" role="group" aria-label="Filter by score">
+            <button class="active" data-status="all">All</button>
+            <button data-status="passed">Passed</button>
+            <button data-status="failed">Failed</button>
+          </div>
+        </div>
+        <div class="task-list" id="task-list" aria-live="polite"></div>
+      </aside>
+
+      <main class="workspace" id="workspace">
+        <section class="empty-state" id="loading-state">
+          <span class="loading-pulse" aria-hidden="true"></span>
+          <p>Reading trajectories…</p>
+        </section>
+
+        <div class="run-view" id="run-view" hidden>
+          <section class="run-header">
+            <div class="run-title-row">
+              <div>
+                <p class="breadcrumb" id="run-breadcrumb"></p>
+                <h1 id="run-title"></h1>
+              </div>
+              <div class="trial-switcher" id="trial-switcher" aria-label="Trials"></div>
+            </div>
+            <p class="scenario" id="scenario"></p>
+            <p class="known-info" id="known-info"></p>
+            <div class="run-stats" id="run-stats"></div>
+            <div class="audio-strip" id="audio-strip">
+              <div class="audio-track">
+                <span>Customer channel</span>
+                <audio id="input-audio" controls preload="metadata"></audio>
+              </div>
+              <div class="audio-track">
+                <span>Agent channel</span>
+                <audio id="output-audio" controls preload="metadata"></audio>
+              </div>
+            </div>
+          </section>
+
+          <nav class="panel-tabs" aria-label="Run details">
+            <button class="active" data-panel="trajectory">Trajectory</button>
+            <button data-panel="evaluation">Evaluation</button>
+            <button data-panel="policy">Relevant policy</button>
+          </nav>
+
+          <section class="panel active" id="trajectory-panel">
+            <div class="trajectory-toolbar">
+              <div class="event-mode" role="group" aria-label="Event detail">
+                <button class="active" data-event-mode="signal">Conversation + tools</button>
+                <button data-event-mode="all">All logs</button>
+              </div>
+              <label class="event-search">
+                <span class="visually-hidden">Search trajectory</span>
+                <input id="event-search" type="search" placeholder="Search this trajectory" autocomplete="off" />
+              </label>
+              <span class="event-count" id="event-count"></span>
+            </div>
+            <div class="timeline" id="timeline"></div>
+          </section>
+
+          <section class="panel" id="evaluation-panel">
+            <div class="evaluation-layout">
+              <div>
+                <h2>Expected tool actions</h2>
+                <div id="action-checks"></div>
+              </div>
+              <aside class="failure-note" id="failure-note"></aside>
+            </div>
+          </section>
+
+          <section class="panel" id="policy-panel">
+            <div class="policy-layout" id="policy-sections"></div>
+          </section>
+        </div>
+      </main>
+    </div>
+    <script type="module" src="/assets/app.js"></script>
+  </body>
+</html>
