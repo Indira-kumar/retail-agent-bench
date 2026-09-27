@@ -6,8 +6,9 @@ from typing import Any
 
 from retail_eval import livekit_runner
 from retail_eval.config import BenchmarkConfig
-from retail_eval.livekit_runner import default_pipeline
+from retail_eval.livekit_runner import _wait_for_trial_end, default_pipeline
 from retail_eval.runner import run_bounded
+from retail_eval.trace import EvaluatorEventCollector, RoomTraceCollector
 
 
 async def test_run_bounded_limits_parallel_rooms() -> None:
@@ -47,3 +48,33 @@ def test_default_eval_pipeline_uses_deepgram_for_speech(monkeypatch: Any) -> Non
     assert pipeline.stt.model == "nova-3"
     assert pipeline.tts.provider == "Deepgram"
     assert pipeline.tts.model == "aura-2-andromeda-en"
+
+
+async def test_trial_ends_after_terminal_tool_response() -> None:
+    room_trace = RoomTraceCollector()
+    room_trace.terminal_reason = "transfer"
+    room_trace.terminal_tool_completed.set()
+    room_trace.terminal_response_received.set()
+
+    reason = await _wait_for_trial_end(
+        customer_completion=asyncio.Event(),
+        room_trace=room_trace,
+        evaluator_events=EvaluatorEventCollector(),
+        timeout_seconds=1,
+    )
+
+    assert reason == "transfer"
+
+
+async def test_trial_ends_when_evaluator_session_closes() -> None:
+    evaluator_events = EvaluatorEventCollector()
+    evaluator_events.session_closed.set()
+
+    reason = await _wait_for_trial_end(
+        customer_completion=asyncio.Event(),
+        room_trace=RoomTraceCollector(),
+        evaluator_events=evaluator_events,
+        timeout_seconds=1,
+    )
+
+    assert reason == "infrastructure_error"

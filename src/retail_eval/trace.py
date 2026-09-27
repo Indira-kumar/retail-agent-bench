@@ -16,15 +16,20 @@ from retail_agent.events import event_payload
 from retail_agent.trace_transport import TRACE_TOPIC, TraceChunkAssembler
 
 logger = logging.getLogger(__name__)
+TERMINAL_TOOL_REASONS = {"transfer_to_human_agents": "transfer"}
 
 
 class RoomTraceCollector:
     def __init__(self) -> None:
         self.messages: list[dict[str, Any]] = []
         self.session_report: dict[str, Any] | None = None
+        self.terminal_reason: str | None = None
         self._assembler = TraceChunkAssembler()
         self.agent_message_received = asyncio.Event()
+        self.agent_session_closed = asyncio.Event()
         self.report_received = asyncio.Event()
+        self.terminal_tool_completed = asyncio.Event()
+        self.terminal_response_received = asyncio.Event()
 
     def attach(self, room: rtc.Room) -> None:
         @room.on("data_received")
@@ -39,8 +44,16 @@ class RoomTraceCollector:
             if message is None:
                 return
             self.messages.append(message)
+            terminal_reason = _terminal_reason(message)
+            if terminal_reason is not None:
+                self.terminal_reason = terminal_reason
+                self.terminal_tool_completed.set()
             if _is_assistant_message(message):
                 self.agent_message_received.set()
+                if self.terminal_reason is not None:
+                    self.terminal_response_received.set()
+            if _is_agent_session_close(message):
+                self.agent_session_closed.set()
             if message.get("message_type") == "session_report":
                 report = message.get("report")
                 if isinstance(report, dict):
@@ -52,6 +65,7 @@ class EvaluatorEventCollector:
     def __init__(self) -> None:
         self.events: list[dict[str, Any]] = []
         self.customer_speech_started = asyncio.Event()
+        self.session_closed = asyncio.Event()
 
     def attach(self, session: Any) -> None:
         event_names = (
@@ -73,8 +87,32 @@ class EvaluatorEventCollector:
                         self.customer_speech_started.set()
                 elif name == "conversation_item_added" and _is_message_from_agent(event):
                     self.customer_speech_started.set()
+                elif name == "close":
+                    self.session_closed.set()
 
             session.on(event_name, on_event)
+
+
+def _terminal_reason(message: Mapping[str, Any]) -> str | None:
+    if message.get("message_type") != "structured_event":
+        return None
+    event = message.get("event")
+    if not isinstance(event, Mapping) or event.get("kind") != "tool.call.completed":
+        return None
+    payload = event.get("payload")
+    if not isinstance(payload, Mapping):
+        return None
+    return TERMINAL_TOOL_REASONS.get(str(payload.get("tool_name", "")))
+
+
+def _is_agent_session_close(message: Mapping[str, Any]) -> bool:
+    if message.get("message_type") != "structured_event":
+        return False
+    event = message.get("event")
+    if not isinstance(event, Mapping) or event.get("kind") != "session.event":
+        return False
+    payload = event.get("payload")
+    return isinstance(payload, Mapping) and payload.get("event_name") == "close"
 
 
 def _is_assistant_message(message: Mapping[str, Any]) -> bool:

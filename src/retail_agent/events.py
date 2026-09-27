@@ -140,4 +140,26 @@ def event_payload(event: Any) -> dict[str, Any]:
     else:
         value = {"value": str(event)}
     safe_value = _json_safe(value)
-    return safe_value if isinstance(safe_value, dict) else {"value": safe_value}
+    payload = safe_value if isinstance(safe_value, dict) else {"value": safe_value}
+    hidden_error = getattr(getattr(event, "error", None), "error", None)
+    if isinstance(hidden_error, BaseException):
+        serialized_error = payload.get("error")
+        if isinstance(serialized_error, dict):
+            serialized_error["detail"] = _exception_payload(hidden_error)
+    return payload
+
+
+def _exception_payload(error: BaseException) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "type": type(error).__name__,
+        "message": str(error),
+    }
+    for attribute in ("status_code", "request_id", "retryable"):
+        value = getattr(error, attribute, None)
+        if value is not None:
+            payload[attribute] = _json_safe(value)
+    cause = error.__cause__
+    if cause is not None:
+        payload["cause_type"] = type(cause).__name__
+        payload["cause_message"] = str(cause)
+    return payload

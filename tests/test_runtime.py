@@ -50,3 +50,8 @@ def test_session_uses_vad_only_turn_handling(monkeypatch: Any) -> None:
     assert session.options["vad"] == {"model": "silero"}
     assert session.options["stt"].provider == "Deepgram"
     assert session.options["tts"].provider == "Deepgram"
+    connect_options = session.options["conn_options"]
+    assert connect_options.stt_conn_options.max_retry == 5
+    assert connect_options.stt_conn_options.retry_interval == 1.0
+    assert connect_options.stt_conn_options.timeout == 10.0
+    assert connect_options.max_unrecoverable_errors == 0

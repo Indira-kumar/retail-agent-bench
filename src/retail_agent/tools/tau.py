@@ -10,13 +10,15 @@ from dataclasses import dataclass
 from time import monotonic
 from typing import Any, cast
 
-from livekit.agents import RunContext, function_tool, llm
+from livekit.agents import AgentSession, RunContext, ToolResult, function_tool, llm
 
 from retail_agent.events import EventEmitter, EventKind, EventSource
 from retail_agent.tools.contracts import TauTool, TauToolkit, ToolSource
 from retail_agent.tools.serialization import serialize_tool_result, to_json_value
 
 logger = logging.getLogger(__name__)
+TRANSFER_TOOL_NAME = "transfer_to_human_agents"
+TRANSFER_CLOSING_MESSAGE = "I'm transferring you to a human agent now. Please hold."
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,6 +46,7 @@ class TauToolAdapter:
         self._emitter = emitter
         self._source = source
         self._lock = asyncio.Lock()
+        self._background_tasks: set[asyncio.Task[None]] = set()
         self._tau_tools = _collect_tools(source, include)
         if not self._tau_tools:
             raise ValueError("At least one tau tool is required")
@@ -63,8 +66,7 @@ class TauToolAdapter:
     def _adapt(self, name: str, tau_tool: TauTool) -> llm.Tool:
         raw_schema = _livekit_schema(name, tau_tool.openai_schema)
 
-        async def invoke(raw_arguments: dict[str, object], context: RunContext[Any]) -> str:
-            del context
+        async def invoke(raw_arguments: dict[str, object], context: RunContext[Any]) -> Any:
             call_id = _call_id(name)
             started = monotonic()
             metadata = self._metadata[name]
@@ -107,6 +109,14 @@ class TauToolAdapter:
                 serialized_result=serialized,
                 duration_seconds=monotonic() - started,
             )
+            if name == TRANSFER_TOOL_NAME:
+                transfer_task = asyncio.create_task(
+                    _finish_transfer(context.session),
+                    name=f"finish-{context.function_call.call_id}",
+                )
+                self._background_tasks.add(transfer_task)
+                transfer_task.add_done_callback(self._background_tasks.discard)
+                return ToolResult(serialized, reply_required=False)
             return serialized
 
         invoke.__name__ = name
@@ -180,3 +190,14 @@ def _call_id(name: str) -> str:
     from uuid import uuid4
 
     return f"{name}-{uuid4()}"
+
+
+async def _finish_transfer(session: AgentSession[Any]) -> None:
+    try:
+        await session.wait_for_idle()
+        speech = session.say(TRANSFER_CLOSING_MESSAGE, allow_interruptions=False)
+        await speech.wait_for_playout()
+    except Exception:
+        logger.exception("Could not play the transfer closing message")
+    finally:
+        session.shutdown(drain=False)

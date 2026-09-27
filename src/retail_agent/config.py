@@ -16,6 +16,9 @@ DEFAULT_VAD_MODEL: Literal["silero"] = "silero"
 DEFAULT_MIN_ENDPOINTING_DELAY = 0.5
 DEFAULT_MAX_ENDPOINTING_DELAY = 3.0
 DEFAULT_MAX_TOOL_STEPS = 8
+DEFAULT_STT_MAX_RETRY = 5
+DEFAULT_STT_RETRY_INTERVAL = 1.0
+DEFAULT_STT_CONNECT_TIMEOUT = 10.0
 
 
 def _read_float(name: str, default: float) -> float:
@@ -65,6 +68,9 @@ class VoicePipelineConfig:
     max_tool_steps: int = DEFAULT_MAX_TOOL_STEPS
     preemptive_generation: bool = False
     llm_provider: LLMProvider = "livekit"
+    stt_max_retry: int = DEFAULT_STT_MAX_RETRY
+    stt_retry_interval: float = DEFAULT_STT_RETRY_INTERVAL
+    stt_connect_timeout: float = DEFAULT_STT_CONNECT_TIMEOUT
 
     def __post_init__(self) -> None:
         if (
@@ -83,6 +89,10 @@ class VoicePipelineConfig:
             raise ValueError("max_endpointing_delay must be at least min_endpointing_delay")
         if self.max_tool_steps < 1:
             raise ValueError("max_tool_steps must be positive")
+        if self.stt_max_retry < 0:
+            raise ValueError("stt_max_retry cannot be negative")
+        if self.stt_retry_interval < 0 or self.stt_connect_timeout <= 0:
+            raise ValueError("STT retry interval cannot be negative and timeout must be positive")
 
     @classmethod
     def from_env(cls) -> VoicePipelineConfig:
@@ -105,4 +115,9 @@ class VoicePipelineConfig:
                 "RETAIL_MAX_ENDPOINTING_DELAY", DEFAULT_MAX_ENDPOINTING_DELAY
             ),
             max_tool_steps=_read_int("RETAIL_MAX_TOOL_STEPS", DEFAULT_MAX_TOOL_STEPS),
+            stt_max_retry=_read_int("RETAIL_STT_MAX_RETRY", DEFAULT_STT_MAX_RETRY),
+            stt_retry_interval=_read_float("RETAIL_STT_RETRY_INTERVAL", DEFAULT_STT_RETRY_INTERVAL),
+            stt_connect_timeout=_read_float(
+                "RETAIL_STT_CONNECT_TIMEOUT", DEFAULT_STT_CONNECT_TIMEOUT
+            ),
         )

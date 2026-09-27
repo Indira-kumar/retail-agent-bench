@@ -16,6 +16,7 @@ from livekit import api, rtc
 from livekit.agents import (
     Agent,
     AgentSession,
+    APIConnectOptions,
     RunContext,
     TurnHandlingOptions,
     function_tool,
@@ -23,6 +24,7 @@ from livekit.agents import (
     llm,
 )
 from livekit.agents.utils import http_context
+from livekit.agents.voice.agent_session import SessionConnectOptions
 from livekit.agents.voice.room_io import RoomOptions
 
 from retail_agent.model_providers import DeepgramSpeechProvider, build_llm
@@ -34,6 +36,7 @@ from retail_eval.trace import EvaluatorEventCollector, RoomTraceCollector, build
 
 logger = logging.getLogger(__name__)
 INITIAL_CUSTOMER_TURN_TIMEOUT_SECONDS = 15.0
+TERMINAL_RESPONSE_TIMEOUT_SECONDS = 20.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -118,6 +121,14 @@ class LiveKitTrialRunner:
                 preemptive_generation={"enabled": False},
             ),
             max_tool_steps=3,
+            conn_options=SessionConnectOptions(
+                stt_conn_options=APIConnectOptions(
+                    max_retry=self._config.stt_max_retry,
+                    retry_interval=self._config.stt_retry_interval,
+                    timeout=self._config.stt_connect_timeout,
+                ),
+                max_unrecoverable_errors=0,
+            ),
         )
         evaluator_events = EvaluatorEventCollector()
         evaluator_events.attach(session)
@@ -148,10 +159,19 @@ class LiveKitTrialRunner:
             await self._dispatch_agent(room_name, task, trial, run_id)
             agent_dispatched = True
             await _start_customer_turn(session, room_trace, evaluator_events)
-            try:
-                await asyncio.wait_for(completion.wait(), self._config.task_timeout_seconds)
-            except TimeoutError:
+            end_reason = await _wait_for_trial_end(
+                customer_completion=completion,
+                room_trace=room_trace,
+                evaluator_events=evaluator_events,
+                timeout_seconds=self._config.task_timeout_seconds,
+            )
+            if end_reason is None:
                 termination_reason = "timeout"
+            elif end_reason == "infrastructure_error":
+                termination_reason = "infrastructure_error"
+            elif end_reason == "transfer":
+                completion_reason = "transfer"
+                termination_reason = "agent_stop"
 
             if completion.is_set():
                 audio_output = session.output.audio
@@ -336,6 +356,50 @@ async def _start_customer_turn(
             "naturally and concisely, as a spoken reply to the retail agent's greeting."
         )
     )
+
+
+async def _wait_for_trial_end(
+    *,
+    customer_completion: asyncio.Event,
+    room_trace: RoomTraceCollector,
+    evaluator_events: EvaluatorEventCollector,
+    timeout_seconds: float,
+) -> str | None:
+    customer_task = asyncio.create_task(customer_completion.wait())
+    terminal_task = asyncio.create_task(_wait_for_terminal_response(room_trace))
+    agent_closed_task = asyncio.create_task(room_trace.agent_session_closed.wait())
+    evaluator_closed_task = asyncio.create_task(evaluator_events.session_closed.wait())
+    tasks = {customer_task, terminal_task, agent_closed_task, evaluator_closed_task}
+    try:
+        done, _ = await asyncio.wait(
+            tasks,
+            timeout=timeout_seconds,
+            return_when=asyncio.FIRST_COMPLETED,
+        )
+        if not done:
+            return None
+        if customer_task in done:
+            return "customer_stop"
+        if terminal_task in done:
+            return terminal_task.result()
+        return "infrastructure_error"
+    finally:
+        for task in tasks:
+            if not task.done():
+                task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+
+
+async def _wait_for_terminal_response(room_trace: RoomTraceCollector) -> str:
+    await room_trace.terminal_tool_completed.wait()
+    try:
+        await asyncio.wait_for(
+            room_trace.terminal_response_received.wait(),
+            TERMINAL_RESPONSE_TIMEOUT_SECONDS,
+        )
+    except TimeoutError:
+        logger.warning("Terminal tool completed without a final agent response; ending the trial")
+    return room_trace.terminal_reason or "complete"
 
 
 def _build_simulation(

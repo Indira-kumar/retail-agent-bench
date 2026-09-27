@@ -9,8 +9,11 @@ from typing import Any, Literal
 
 from retail_agent.config import (
     DEFAULT_LLM_MODEL,
+    DEFAULT_STT_CONNECT_TIMEOUT,
     DEFAULT_STT_LANGUAGE,
+    DEFAULT_STT_MAX_RETRY,
     DEFAULT_STT_MODEL,
+    DEFAULT_STT_RETRY_INTERVAL,
     DEFAULT_TTS_MODEL,
 )
 from retail_agent.model_providers import LLMProvider, parse_llm_provider
@@ -32,7 +35,7 @@ class BenchmarkConfig:
     agent_name: str = "retail-support-agent"
     output_dir: Path = Path("eval-runs")
     concurrency: int = 3
-    task_timeout_seconds: float = 360.0
+    task_timeout_seconds: float = 600.0
     report_timeout_seconds: float = 20.0
     evaluator_stt: str = DEFAULT_STT_MODEL
     evaluator_stt_language: str = DEFAULT_STT_LANGUAGE
@@ -40,6 +43,9 @@ class BenchmarkConfig:
     evaluator_tts: str = DEFAULT_TTS_MODEL
     evaluator_vad: Literal["silero"] = "silero"
     evaluator_llm_provider: LLMProvider = "livekit"
+    stt_max_retry: int = DEFAULT_STT_MAX_RETRY
+    stt_retry_interval: float = DEFAULT_STT_RETRY_INTERVAL
+    stt_connect_timeout: float = DEFAULT_STT_CONNECT_TIMEOUT
 
     def __post_init__(self) -> None:
         if not self.livekit_url or not self.livekit_api_key or not self.livekit_api_secret:
@@ -52,6 +58,10 @@ class BenchmarkConfig:
             raise ValueError("concurrency must be between 1 and 5")
         if self.task_timeout_seconds <= 0 or self.report_timeout_seconds <= 0:
             raise ValueError("timeouts must be positive")
+        if self.stt_max_retry < 0:
+            raise ValueError("stt_max_retry cannot be negative")
+        if self.stt_retry_interval < 0 or self.stt_connect_timeout <= 0:
+            raise ValueError("STT retry interval cannot be negative and timeout must be positive")
 
     @classmethod
     def from_env(
@@ -68,8 +78,11 @@ class BenchmarkConfig:
             agent_name=os.getenv("LIVEKIT_AGENT_NAME", "retail-support-agent"),
             output_dir=output_dir or Path(os.getenv("EVAL_OUTPUT_DIR", "eval-runs")),
             concurrency=concurrency or int(os.getenv("EVAL_CONCURRENCY", "3")),
-            task_timeout_seconds=task_timeout_seconds
-            or float(os.getenv("EVAL_TASK_TIMEOUT_SECONDS", "360")),
+            task_timeout_seconds=(
+                task_timeout_seconds
+                if task_timeout_seconds is not None
+                else float(os.getenv("EVAL_TASK_TIMEOUT_SECONDS", "600"))
+            ),
             report_timeout_seconds=float(os.getenv("EVAL_REPORT_TIMEOUT_SECONDS", "20")),
             evaluator_stt=os.getenv(
                 "EVAL_STT_MODEL", os.getenv("RETAIL_STT_MODEL", DEFAULT_STT_MODEL)
@@ -89,6 +102,13 @@ class BenchmarkConfig:
                 "EVAL_TTS_MODEL", os.getenv("RETAIL_TTS_MODEL", DEFAULT_TTS_MODEL)
             ),
             evaluator_vad=_evaluator_vad(),
+            stt_max_retry=int(os.getenv("EVAL_STT_MAX_RETRY", str(DEFAULT_STT_MAX_RETRY))),
+            stt_retry_interval=float(
+                os.getenv("EVAL_STT_RETRY_INTERVAL", str(DEFAULT_STT_RETRY_INTERVAL))
+            ),
+            stt_connect_timeout=float(
+                os.getenv("EVAL_STT_CONNECT_TIMEOUT", str(DEFAULT_STT_CONNECT_TIMEOUT))
+            ),
         )
 
     def public_dict(self) -> dict[str, Any]:

@@ -100,7 +100,7 @@ def _parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--split", default="test")
     run_parser.add_argument("--trials", type=int, default=1)
     run_parser.add_argument("--concurrency", type=int, choices=range(1, 6), default=3)
-    run_parser.add_argument("--timeout", type=float, default=360.0)
+    run_parser.add_argument("--timeout", type=float)
     run_parser.add_argument("--output", type=Path, default=Path("eval-runs"))
     run_parser.add_argument("--experiment-id")
 

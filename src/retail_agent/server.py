@@ -33,6 +33,7 @@ class ActiveSession:
     agent: RetailSupportAgent
     session: AgentSession[Any]
     publisher: RoomEventPublisher | None
+    stop_task: asyncio.Task[None] | None = None
 
 
 _active_sessions: dict[str, ActiveSession] = {}
@@ -46,9 +47,13 @@ async def _on_session_end(ctx: agents.JobContext) -> None:
     active = _active_sessions.pop(ctx.room.name, None)
     if active is None:
         return
+    await _finalize_session(ctx, active)
 
+
+async def _finalize_session(ctx: agents.JobContext, active: ActiveSession) -> None:
     agent = active.agent
     session = active.session
+    await session.aclose()
     await agent.event_emitter.drain()
     if active.publisher is not None:
         try:
@@ -64,6 +69,18 @@ async def _on_session_end(ctx: agents.JobContext) -> None:
             logger.exception("Could not publish the final session report for %s", ctx.room.name)
         finally:
             active.publisher.close()
+
+
+async def _stop_evaluation_session(
+    ctx: agents.JobContext,
+    active: ActiveSession,
+    reason: str,
+) -> None:
+    _active_sessions.pop(ctx.room.name, None)
+    try:
+        await _finalize_session(ctx, active)
+    finally:
+        ctx.shutdown(reason=f"evaluation completed: {reason}")
 
 
 def load_runtime_bindings() -> RuntimeBindings:
@@ -111,7 +128,14 @@ async def retail_voice_agent(ctx: agents.JobContext) -> None:
     def on_data_received(packet: rtc.DataPacket) -> None:
         message = decode_control_message(packet)
         if message is not None and message.get("message_type") == "evaluation.stop":
-            session.shutdown(drain=True)
+            active = _active_sessions.get(ctx.room.name)
+            if active is None or active.stop_task is not None:
+                return
+            reason = str(message.get("reason", "complete"))
+            active.stop_task = asyncio.create_task(
+                _stop_evaluation_session(ctx, active, reason),
+                name=f"stop-{ctx.room.name}",
+            )
 
     try:
         await session.start(room=ctx.room, agent=agent)

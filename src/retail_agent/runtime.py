@@ -5,7 +5,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from livekit.agents import AgentSession, TurnHandlingOptions, inference
+from livekit.agents import (
+    AgentSession,
+    APIConnectOptions,
+    TurnHandlingOptions,
+    inference,
+)
+from livekit.agents.voice.agent_session import SessionConnectOptions
 from livekit.agents.voice.events import EventTypes
 
 from retail_agent.agent import RetailSupportAgent
@@ -52,6 +58,14 @@ def create_livekit_session(
             preemptive_generation={"enabled": pipeline.preemptive_generation},
         ),
         max_tool_steps=pipeline.max_tool_steps,
+        conn_options=SessionConnectOptions(
+            stt_conn_options=APIConnectOptions(
+                max_retry=pipeline.stt_max_retry,
+                retry_interval=pipeline.stt_retry_interval,
+                timeout=pipeline.stt_connect_timeout,
+            ),
+            max_unrecoverable_errors=0,
+        ),
     )
     _attach_session_events(session, agent)
     agent.event_emitter.emit(
@@ -68,6 +82,9 @@ def create_livekit_session(
         turn_detection="vad",
         max_tool_steps=pipeline.max_tool_steps,
         preemptive_generation=pipeline.preemptive_generation,
+        stt_max_retry=pipeline.stt_max_retry,
+        stt_retry_interval=pipeline.stt_retry_interval,
+        stt_connect_timeout=pipeline.stt_connect_timeout,
     )
     return session
 
