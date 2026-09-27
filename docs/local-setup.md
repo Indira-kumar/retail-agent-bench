@@ -112,12 +112,27 @@ The factory runs once per room. Do not reuse a mutable DB between evaluations.
 Direct provider plugins are optional:
 
 ```bash
-uv sync --extra providers
+uv sync --extra tau --extra providers --extra dev
 ```
 
-Set the provider's token, such as `OPENAI_API_KEY`, `DEEPGRAM_API_KEY`, or `CARTESIA_API_KEY`,
-and construct the `AgentSession` at the runtime boundary. The included session factory uses
-LiveKit Inference and ignores direct provider tokens.
+To use OpenRouter for the LLM while keeping STT and TTS on LiveKit Inference, set these values
+in `.env.local` after installing the providers extra:
+
+```dotenv
+OPENROUTER_API_KEY=your-openrouter-key
+RETAIL_LLM_PROVIDER=openrouter
+RETAIL_LLM_MODEL=openrouter/auto
+EVAL_LLM_PROVIDER=openrouter
+EVAL_LLM_MODEL=openrouter/auto
+```
+
+`RETAIL_STT_MODEL`, `RETAIL_TTS_MODEL`, `EVAL_STT_MODEL`, and `EVAL_TTS_MODEL` remain LiveKit
+Inference descriptors. The provider switch is lazy, so the default `livekit` configuration does
+not import the optional OpenAI plugin.
+
+For other direct providers, set the relevant token, such as `OPENAI_API_KEY`, `DEEPGRAM_API_KEY`,
+or `CARTESIA_API_KEY`, and construct the `AgentSession` at the runtime boundary. The included
+session factory uses LiveKit Inference for those providers unless explicitly configured otherwise.
 
 Module 2 has a separate evaluator pipeline. Environment model descriptors configure its
 LiveKit Inference defaults. Code that instantiates `LiveKitTrialRunner` may instead pass a

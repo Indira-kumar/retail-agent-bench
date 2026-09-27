@@ -11,6 +11,7 @@ from livekit.agents.voice.events import EventTypes
 from retail_agent.agent import RetailSupportAgent
 from retail_agent.config import VoicePipelineConfig
 from retail_agent.events import EventKind, EventSource, event_payload
+from retail_agent.model_providers import build_llm
 from retail_agent.tools.contracts import ToolSource
 
 
@@ -32,7 +33,7 @@ def create_livekit_session(
     pipeline = config or VoicePipelineConfig()
     session: AgentSession[Any] = AgentSession(
         stt=pipeline.stt,
-        llm=pipeline.llm,
+        llm=build_llm(provider=pipeline.llm_provider, model=pipeline.llm),
         tts=pipeline.tts,
         vad=inference.VAD(model=pipeline.vad_model),
         turn_handling=TurnHandlingOptions(
@@ -53,6 +54,7 @@ def create_livekit_session(
         EventSource.SESSION,
         stt=str(pipeline.stt),
         llm=str(pipeline.llm),
+        llm_provider=pipeline.llm_provider,
         tts=str(pipeline.tts),
         vad=str(pipeline.vad_model),
         turn_detection="vad",

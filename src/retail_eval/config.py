@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from retail_agent.config import DEFAULT_LLM_MODEL, DEFAULT_STT_MODEL, DEFAULT_TTS_MODEL
+from retail_agent.model_providers import LLMProvider, parse_llm_provider
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,10 +33,13 @@ class BenchmarkConfig:
     evaluator_llm: str = DEFAULT_LLM_MODEL
     evaluator_tts: str = DEFAULT_TTS_MODEL
     evaluator_vad: Literal["silero"] = "silero"
+    evaluator_llm_provider: LLMProvider = "livekit"
 
     def __post_init__(self) -> None:
         if not self.livekit_url or not self.livekit_api_key or not self.livekit_api_secret:
             raise ValueError("LIVEKIT_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET are required")
+        if self.evaluator_llm_provider not in {"livekit", "openrouter"}:
+            raise ValueError("evaluator_llm_provider must be 'livekit' or 'openrouter'")
         if not 1 <= self.concurrency <= 5:
             raise ValueError("concurrency must be between 1 and 5")
         if self.task_timeout_seconds <= 0 or self.report_timeout_seconds <= 0:
@@ -64,6 +68,10 @@ class BenchmarkConfig:
             ),
             evaluator_llm=os.getenv(
                 "EVAL_LLM_MODEL", os.getenv("RETAIL_LLM_MODEL", DEFAULT_LLM_MODEL)
+            ),
+            evaluator_llm_provider=parse_llm_provider(
+                os.getenv("EVAL_LLM_PROVIDER", os.getenv("RETAIL_LLM_PROVIDER")),
+                variable="EVAL_LLM_PROVIDER",
             ),
             evaluator_tts=os.getenv(
                 "EVAL_TTS_MODEL", os.getenv("RETAIL_TTS_MODEL", DEFAULT_TTS_MODEL)

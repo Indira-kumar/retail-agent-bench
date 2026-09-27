@@ -25,6 +25,7 @@ from livekit.agents import (
 from livekit.agents.utils import http_context
 from livekit.agents.voice.room_io import RoomOptions
 
+from retail_agent.model_providers import build_llm
 from retail_agent.trace_transport import CONTROL_TOPIC
 from retail_eval.artifacts import TrialPaths
 from retail_eval.audio import RecordingAudioInput, RecordingAudioOutput, WavWriter
@@ -250,7 +251,10 @@ async def _stop_retail_agent(
 def default_pipeline(config: BenchmarkConfig) -> EvaluatorPipeline:
     return EvaluatorPipeline(
         stt=config.evaluator_stt,
-        llm=config.evaluator_llm,
+        llm=build_llm(
+            provider=config.evaluator_llm_provider,
+            model=config.evaluator_llm,
+        ),
         tts=config.evaluator_tts,
         vad=inference.VAD(model=config.evaluator_vad),
     )

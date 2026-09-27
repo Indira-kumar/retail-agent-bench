@@ -88,7 +88,9 @@ turn them into focused custom evals.
 ## Provider replacement
 
 Retail-agent providers remain configured through `VoicePipelineConfig`. The evaluator caller
-has independent `EVAL_STT_MODEL`, `EVAL_LLM_MODEL`, and `EVAL_TTS_MODEL` descriptors.
+has independent `EVAL_STT_MODEL`, `EVAL_LLM_MODEL`, and `EVAL_TTS_MODEL` descriptors. Set
+`EVAL_LLM_PROVIDER=openrouter` to use OpenRouter only for evaluator LLM calls; evaluator STT and
+TTS remain on LiveKit Inference.
 
 `LiveKitTrialRunner(..., pipeline_factory=...)` accepts a factory returning
 `EvaluatorPipeline`. That factory may construct direct-provider implementations after LiveKit

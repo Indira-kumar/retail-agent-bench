@@ -6,6 +6,8 @@ import os
 from dataclasses import dataclass
 from typing import Literal
 
+from retail_agent.model_providers import LLMProvider, parse_llm_provider
+
 DEFAULT_STT_MODEL = "assemblyai/universal-3-5-pro:en"
 DEFAULT_LLM_MODEL = "google/gemma-4-31b-it"
 DEFAULT_TTS_MODEL = "fishaudio/s2.1-pro:fa4c9eb3dccc4806b382b40d61c6b10a"
@@ -48,8 +50,8 @@ class RetailAgentConfig:
 class VoicePipelineConfig:
     """LiveKit voice-pipeline settings.
 
-    Model strings are LiveKit Inference descriptors. Callers that use provider plugins can
-    instantiate ``AgentSession`` themselves while reusing ``RetailSupportAgent``.
+    STT and TTS model strings always use LiveKit Inference. The LLM can use either a LiveKit
+    Inference descriptor or the OpenRouter provider plugin via ``llm_provider``.
     """
 
     stt: str = DEFAULT_STT_MODEL
@@ -60,10 +62,13 @@ class VoicePipelineConfig:
     max_endpointing_delay: float = DEFAULT_MAX_ENDPOINTING_DELAY
     max_tool_steps: int = DEFAULT_MAX_TOOL_STEPS
     preemptive_generation: bool = False
+    llm_provider: LLMProvider = "livekit"
 
     def __post_init__(self) -> None:
         if not self.stt or not self.llm or not self.tts or not self.vad_model:
             raise ValueError("STT, LLM, TTS, and VAD model identifiers must be non-empty")
+        if self.llm_provider not in {"livekit", "openrouter"}:
+            raise ValueError("llm_provider must be 'livekit' or 'openrouter'")
         if self.min_endpointing_delay < 0:
             raise ValueError("min_endpointing_delay cannot be negative")
         if self.max_endpointing_delay < self.min_endpointing_delay:
@@ -79,6 +84,9 @@ class VoicePipelineConfig:
         return cls(
             stt=os.getenv("RETAIL_STT_MODEL", DEFAULT_STT_MODEL),
             llm=os.getenv("RETAIL_LLM_MODEL", DEFAULT_LLM_MODEL),
+            llm_provider=parse_llm_provider(
+                os.getenv("RETAIL_LLM_PROVIDER"), variable="RETAIL_LLM_PROVIDER"
+            ),
             tts=os.getenv("RETAIL_TTS_MODEL", DEFAULT_TTS_MODEL),
             vad_model="silero",
             min_endpointing_delay=_read_float(

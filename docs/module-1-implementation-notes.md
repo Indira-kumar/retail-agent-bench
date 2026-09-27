@@ -74,5 +74,7 @@ shutdown when all scheduled events must be flushed.
 - Tau's wheel omits benchmark data. `TAU2_DATA_DIR` must point to the pinned checkout's `data/`.
 - LiveKit Inference is the default model route. Direct provider construction stays at the
   `AgentSession` boundary.
+- OpenRouter can be selected for the LLM with `RETAIL_LLM_PROVIDER=openrouter`; STT and TTS
+  continue to use LiveKit Inference model descriptors.
 - Unit and integration checks validate code contracts; behavioral evaluation uses real voice in
   Module 2 rather than test-based dialogue simulations.
