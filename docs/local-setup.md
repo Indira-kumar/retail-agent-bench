@@ -42,9 +42,9 @@ DEEPGRAM_API_KEY=your-deepgram-key
 TAU2_DATA_DIR=/absolute/path/to/retail-agent-bench/.external/tau2-bench/data
 ```
 
-## 5. Optional: use OpenRouter
+## 5. Use OpenRouter
 
-Install the provider and add these values to `.env.local`:
+Since live kit rate limits after few API calls, Install the provider and add these values to `.env.local`:
 
 ```bash
 uv sync --extra dev --extra tau --extra providers
