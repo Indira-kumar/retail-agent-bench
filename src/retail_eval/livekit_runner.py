@@ -22,6 +22,7 @@ from livekit.agents import (
     inference,
     llm,
 )
+from livekit.agents.utils import http_context
 
 from retail_agent.trace_transport import CONTROL_TOPIC
 from retail_eval.artifacts import TrialPaths
@@ -55,6 +56,10 @@ class LiveKitTrialRunner:
         self._pipeline_factory = pipeline_factory or default_pipeline
 
     async def run(self, *, task: Any, trial: int, paths: TrialPaths, policy: str) -> TrialResult:
+        async with http_context.open():
+            return await self._run(task=task, trial=trial, paths=paths, policy=policy)
+
+    async def _run(self, *, task: Any, trial: int, paths: TrialPaths, policy: str) -> TrialResult:
         run_id = f"task-{task.id}-trial-{trial}-{uuid4().hex[:8]}"
         room_name = f"retail-eval-{run_id}"
         completion = asyncio.Event()
