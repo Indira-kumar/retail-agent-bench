@@ -19,10 +19,10 @@ The project has three modules:
 
 ## Alternatives and tradeoffs
 
-- **Speech-to-speech:**
-  - could provide lower latency and more natural conversations.
-  - chose the intermediate transcript makes failures easier to observe and debug (also for adhering to assignment scope)
-- **Text-only evals:**
+- **Single runs vs repeated trials:**
+  - a single voice trajectory is cheaper and faster.
+  - ran three trials per task because STT and model behavior are stochastic
+- **Audio evals vs text-only evals:**
   - these would be faster and cheaper
   - but they would miss STT, TTS, interruption, and audio-quality failures
 - **Deterministic policy checks:**
@@ -30,8 +30,6 @@ The project has three modules:
   - kept policy compliance prompt-based for this version so the agent remains simple
 
 ## Future improvements
-
-Reliabilility = observability + evals
 
 If more time was there, I would:
 
