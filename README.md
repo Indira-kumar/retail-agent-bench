@@ -40,6 +40,9 @@ If more time was there, I would:
 - track other metrics like tool errors, cost, and turn latency
 - compare speech-to-speech with the current pipeline using the same tasks and metrics
 
+My analysis of the evaluation results is in [analysis.md](analysis.md).
+Behavioral evaluation and optimization is at [PR #1](https://github.com/Indira-kumar/retail-agent-bench/pull/1).
+
 ## Local setup
 
 Follow the [local setup guide](docs/local-setup.md) to install and run the agent and evaluations.
