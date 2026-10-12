@@ -1,7 +1,7 @@
 # Module 3: prompt-behavior evals
 
 This suite converts repeated failures from the three baseline voice runs into three deterministic
-behavior evals. It reads the same `task.json` and `simulation.json` artifacts produced by Module 2;
+behavior evals. It reads the task and simulation documents from the Module 2 results database;
 it does not call an LLM grader. That makes a pre/post prompt comparison independent of grader
 availability and scoring variance.
 
@@ -65,15 +65,15 @@ uv run retail-eval run \
 Then score the resulting experiment directory:
 
 ```bash
-uv run retail-behavior-eval eval-runs/retail-prompt-behaviors-prompt-v2
+uv run retail-behavior-eval retail-prompt-behaviors-prompt-v2
 ```
 
 The command prints JSON and exits with status 1 while any behavior fails. Use `--output` to retain
-a comparison report outside the experiment artifacts:
+a comparison report outside the database. Each invocation also saves its report in `analysis_runs`:
 
 ```bash
 uv run retail-behavior-eval \
-  eval-runs/retail-prompt-behaviors-prompt-v2 \
+  retail-prompt-behaviors-prompt-v2 \
   --output behavior-report.json
 ```
 
@@ -81,17 +81,18 @@ Use a unique experiment ID for each prompt version. Keep the model, temperature,
 timeout, trial count, and concurrency fixed between versions. The suite requires every supplied
 trial to pass, so the report exposes regressions instead of averaging them away.
 
-## Baseline artifact check
+## Baseline database check
 
 The current evidence spans the curated first two runs and the ignored third run:
 
 ```bash
-uv run retail-behavior-eval \
+uv run retail-eval import \
   evals-results/run-1-retail-8-tasks-c3 \
   evals-results/run-2-retail-6-diverse-c3 \
   eval-runs/retail-6-diverse-c3-run3
+uv run retail-behavior-eval \
+  run-1-retail-8-tasks-c3 run-2-retail-6-diverse-c3 retail-6-diverse-c3-run3
 ```
 
 This command is expected to fail all three behaviors before prompt optimization. The third run is
-currently under `eval-runs/`; copy it to `evals-results/` only if you decide it is suitable for the
-curated repository evidence.
+currently under `eval-runs/` and can be imported directly.

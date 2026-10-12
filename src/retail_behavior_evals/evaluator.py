@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from pathlib import Path
@@ -10,10 +9,11 @@ from typing import cast
 
 from retail_behavior_evals.catalog import BEHAVIORS, SUITE_ID, BehaviorCase, CheckKind
 from retail_behavior_evals.models import BehaviorResult, CaseResult, SuiteResult, TrialArtifacts
+from retail_eval.results import ResultsStore
 
 
-def evaluate_behavior_suite(result_roots: Sequence[Path]) -> SuiteResult:
-    trials = _load_trials(result_roots)
+def evaluate_behavior_suite(database: Path, experiment_ids: Sequence[str]) -> SuiteResult:
+    trials = _load_trials(database, experiment_ids)
     behavior_results = tuple(
         _evaluate_behavior(
             behavior.behavior_id, behavior.title, behavior.prompt_target, behavior.cases, trials
@@ -123,36 +123,29 @@ def _evaluate_tool_error_explanation(
     return passed, evidence
 
 
-def _load_trials(result_roots: Sequence[Path]) -> dict[str, list[TrialArtifacts]]:
+def _load_trials(database: Path, experiment_ids: Sequence[str]) -> dict[str, list[TrialArtifacts]]:
     trials: defaultdict[str, list[TrialArtifacts]] = defaultdict(list)
-    for root in result_roots:
-        if not root.is_dir():
-            raise ValueError(f"Result directory does not exist: {root}")
-        for simulation_path in sorted(root.glob("task_*/trial_*/simulation.json")):
-            trial_dir = simulation_path.parent
-            task_path = trial_dir / "task.json"
-            if not task_path.is_file():
-                raise ValueError(f"Missing task artifact beside {simulation_path}")
-            task = _load_object(task_path)
-            simulation = _load_object(simulation_path)
-            task_id = str(task.get("id", simulation.get("task_id", "")))
-            trials[task_id].append(
-                TrialArtifacts(
-                    task_id=task_id,
-                    trial_id=trial_dir.name,
-                    source=trial_dir,
-                    task=task,
-                    simulation=simulation,
-                )
+    if not database.is_file():
+        raise ValueError(f"Results database does not exist: {database}")
+    store = ResultsStore(database)
+    for experiment_id in experiment_ids:
+        store.experiment(experiment_id)
+    for row in store.behavior_trials(list(experiment_ids)):
+        task_id = row["task_id"]
+        task = row["task"]
+        simulation = row["simulation"]
+        if not isinstance(task, dict) or not isinstance(simulation, dict):
+            raise ValueError(f"Invalid task or simulation for {row['experiment_id']}/{task_id}")
+        trials[task_id].append(
+            TrialArtifacts(
+                task_id=task_id,
+                trial_id=f"trial_{row['trial']}",
+                source=f"{row['experiment_id']}/task_{task_id}/trial_{row['trial']}",
+                task=task,
+                simulation=simulation,
             )
+        )
     return dict(trials)
-
-
-def _load_object(path: Path) -> dict[str, object]:
-    value = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(value, dict):
-        raise ValueError(f"Expected a JSON object in {path}")
-    return cast(dict[str, object], value)
 
 
 def _expected_action(task: dict[str, object], tool_name: str) -> dict[str, object] | None:

@@ -5,15 +5,18 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import tempfile
 from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
-from retail_eval.artifacts import ArtifactStore, TrialPaths, new_experiment_id
+from retail_eval.artifacts import TrialPaths, new_experiment_id
 from retail_eval.config import BenchmarkConfig
 from retail_eval.failures import build_failure_clusters, classify_failure
 from retail_eval.livekit_runner import LiveKitTrialRunner, TrialResult
 from retail_eval.policy import relevant_policy
+from retail_eval.results import ResultsStore, default_results_store, new_manifest
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +26,7 @@ class TrialSpec:
     task: Any
     trial: int
     paths: TrialPaths
+    relevant_policy: dict[str, Any]
 
 
 class BenchmarkRunner:
@@ -42,50 +46,57 @@ class BenchmarkRunner:
         policy: str,
         trials: int,
         experiment_id: str | None = None,
-    ) -> tuple[ArtifactStore, list[dict[str, Any]]]:
+    ) -> tuple[ResultsStore, str, list[dict[str, Any]]]:
         _validate_scorer_credentials(self._config.scorer_llm)
         if not 1 <= len(tasks) <= 30:
             raise ValueError("Select between 1 and 30 benchmark tasks")
         if trials < 1:
             raise ValueError("trials must be positive")
 
-        store = ArtifactStore(
-            self._config.output_dir,
-            experiment_id or new_experiment_id(),
-        )
-        store.initialize(
-            config=self._config.public_dict(),
-            task_ids=[str(task.id) for task in tasks],
-            trials=trials,
-        )
-        specs = [
-            TrialSpec(
-                task=task,
-                trial=trial,
-                paths=store.create_trial(
-                    task=task,
-                    trial=trial,
-                    policy=policy,
-                    relevant_policy=relevant_policy(task, policy),
-                ),
+        store = default_results_store(self._config.output_dir)
+        run_name = experiment_id or new_experiment_id()
+        store.create_experiment(
+            new_manifest(
+                run_name, self._config.public_dict(), [str(task.id) for task in tasks], trials
             )
-            for task in tasks
-            for trial in range(1, trials + 1)
-        ]
-
-        summaries = await run_bounded(
-            specs,
-            concurrency=self._config.concurrency,
-            execute=lambda spec: self._run_trial(spec, store, policy),
         )
-        store.write_json(store.root / "summary.json", summaries)
-        store.write_json(store.root / "failure_clusters.json", build_failure_clusters(summaries))
-        return store, summaries
+        with tempfile.TemporaryDirectory(prefix="retail-eval-") as staging:
+            specs = []
+            for task in tasks:
+                for trial in range(1, trials + 1):
+                    root = Path(staging) / f"task_{task.id}" / f"trial_{trial}"
+                    root.mkdir(parents=True)
+                    spec = TrialSpec(
+                        task=task,
+                        trial=trial,
+                        paths=TrialPaths(root, root / "input.wav", root / "output.wav"),
+                        relevant_policy=relevant_policy(task, policy),
+                    )
+                    store.create_trial(
+                        run_name,
+                        str(task.id),
+                        trial,
+                        {
+                            "task": task.model_dump(mode="json"),
+                            "policy": policy,
+                            "relevant_policy": spec.relevant_policy,
+                        },
+                    )
+                    specs.append(spec)
+            summaries = await run_bounded(
+                specs,
+                concurrency=self._config.concurrency,
+                execute=lambda spec: self._run_trial(spec, store, run_name, policy),
+            )
+        store.save_experiment_document(run_name, "summary", summaries)
+        store.finish_experiment(run_name, build_failure_clusters(summaries))
+        return store, run_name, summaries
 
     async def _run_trial(
         self,
         spec: TrialSpec,
-        store: ArtifactStore,
+        store: ResultsStore,
+        experiment_id: str,
         policy: str,
     ) -> dict[str, Any]:
         try:
@@ -97,11 +108,7 @@ class BenchmarkRunner:
             )
         except Exception as exc:
             logger.exception("Trial setup failed for task=%s trial=%s", spec.task.id, spec.trial)
-            store.write_json(
-                spec.paths.root / "runner_error.json",
-                {"error_type": type(exc).__name__, "error_message": str(exc)},
-            )
-            return {
+            summary = {
                 "run_id": None,
                 "task_id": str(spec.task.id),
                 "trial": spec.trial,
@@ -109,9 +116,24 @@ class BenchmarkRunner:
                 "termination_reason": "infrastructure_error",
                 "duration_seconds": None,
                 "failure_labels": ["infrastructure_error"],
-                "artifact_path": str(spec.paths.root.relative_to(store.root)),
                 "livekit_room": None,
             }
+            await asyncio.to_thread(
+                store.save_trial,
+                experiment_id,
+                str(spec.task.id),
+                spec.trial,
+                summary=summary,
+                documents={
+                    "runner_error": {
+                        "error_type": type(exc).__name__,
+                        "error_message": str(exc),
+                    }
+                },
+                events=[],
+                audio_paths={"input": spec.paths.input_audio, "output": spec.paths.output_audio},
+            )
+            return summary
 
         scoring_error: Exception | None = None
         try:
@@ -133,7 +155,6 @@ class BenchmarkRunner:
         labels = classify_failure(result.simulation, result.trace_messages)
         if scoring_error is not None:
             labels.insert(0, "scoring_error")
-        _write_trial_artifacts(store, spec.paths, result, labels)
         reward = result.simulation.reward_info.reward if result.simulation.reward_info else None
         summary = {
             "run_id": result.simulation.id,
@@ -143,9 +164,27 @@ class BenchmarkRunner:
             "termination_reason": result.simulation.termination_reason.value,
             "duration_seconds": result.simulation.duration,
             "failure_labels": labels,
-            "artifact_path": str(spec.paths.root.relative_to(store.root)),
             "livekit_room": result.simulation.provider_session_id,
         }
+        await asyncio.to_thread(
+            store.save_trial,
+            experiment_id,
+            str(spec.task.id),
+            spec.trial,
+            summary=summary,
+            documents={
+                "evaluator_events": result.evaluator_events,
+                "evaluator_history": result.evaluator_history,
+                "session_report": result.session_report,
+                "simulation": result.simulation.model_dump(mode="json", exclude={"reward_info"}),
+                "score": result.simulation.reward_info.model_dump(mode="json")
+                if result.simulation.reward_info is not None
+                else None,
+                "failure": {"labels": labels},
+            },
+            events=result.trace_messages,
+            audio_paths={"input": spec.paths.input_audio, "output": spec.paths.output_audio},
+        )
         logger.info(
             "Completed task=%s trial=%s reward=%s failures=%s",
             spec.task.id,
@@ -219,26 +258,3 @@ def _validate_scorer_credentials(scorer_llm: str) -> None:
         raise ValueError("EVAL_SCORER_LLM must use the openrouter/<model> format")
     if not os.getenv("OPENROUTER_API_KEY"):
         raise ValueError("OPENROUTER_API_KEY is required by EVAL_SCORER_LLM")
-
-
-def _write_trial_artifacts(
-    store: ArtifactStore,
-    paths: TrialPaths,
-    result: TrialResult,
-    labels: list[str],
-) -> None:
-    store.write_jsonl(paths.root / "events.jsonl", result.trace_messages)
-    store.write_json(paths.root / "evaluator_events.json", result.evaluator_events)
-    store.write_json(paths.root / "evaluator_history.json", result.evaluator_history)
-    store.write_json(paths.root / "session_report.json", result.session_report)
-    store.write_json(
-        paths.root / "simulation.json",
-        result.simulation.model_dump(mode="json", exclude={"reward_info"}),
-    )
-    store.write_json(
-        paths.root / "score.json",
-        result.simulation.reward_info.model_dump(mode="json")
-        if result.simulation.reward_info is not None
-        else None,
-    )
-    store.write_json(paths.root / "failure.json", {"labels": labels})

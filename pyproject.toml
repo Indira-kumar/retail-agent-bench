@@ -22,6 +22,9 @@ tau = [
 providers = [
   "livekit-agents[cartesia,openai]==1.8.3",
 ]
+s3 = [
+  "boto3>=1.35,<2",
+]
 dev = [
   "mypy>=1.18,<2",
   "pytest>=8.4,<9",
@@ -60,4 +63,8 @@ mypy_path = "src"
 
 [[tool.mypy.overrides]]
 module = ["tau2.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["boto3.*"]
 ignore_missing_imports = true

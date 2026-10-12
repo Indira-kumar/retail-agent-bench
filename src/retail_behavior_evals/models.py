@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
 
 
 @dataclass(frozen=True)
 class TrialArtifacts:
     task_id: str
     trial_id: str
-    source: Path
+    source: str
     task: dict[str, object]
     simulation: dict[str, object]
 

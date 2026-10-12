@@ -86,7 +86,7 @@ uv run retail-eval run --task-ids 5,9,12 --concurrency 3
 Replace `<experiment-id>` with the directory created by the evaluation:
 
 ```bash
-uv run retail-eval visualize eval-runs/<experiment-id>
+uv run retail-eval visualize <experiment-id>
 ```
 Reference:
 ![Trajectory visualizer](../assets/trajectory-visualizer.png)
