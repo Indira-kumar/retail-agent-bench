@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import asyncio
 import json
+from argparse import Namespace
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
 
-from retail_eval import livekit_runner
+from retail_eval import cli, livekit_runner
 from retail_eval.config import BenchmarkConfig
 from retail_eval.livekit_runner import (
     _remove_spoken_stage_directions,
@@ -178,3 +179,57 @@ async def test_trial_ends_when_evaluator_session_closes() -> None:
     )
 
     assert reason == "infrastructure_error"
+
+
+@pytest.mark.parametrize(
+    ("termination_reason", "failure_labels", "raises"),
+    [
+        ("agent_stop", [], False),
+        ("infrastructure_error", ["infrastructure_error"], True),
+        ("agent_stop", ["scoring_error"], True),
+    ],
+)
+async def test_eval_cli_reports_unreliable_trials(
+    monkeypatch: Any,
+    termination_reason: str,
+    failure_labels: list[str],
+    raises: bool,
+) -> None:
+    class FakeRunner:
+        def __init__(self, config: object) -> None:
+            del config
+
+        async def run(self, **kwargs: object) -> tuple[object, str, list[dict[str, object]]]:
+            del kwargs
+            return (
+                SimpleNamespace(location="PostgreSQL"),
+                "test-run",
+                [
+                    {
+                        "reward": 0.0,
+                        "termination_reason": termination_reason,
+                        "failure_labels": failure_labels,
+                    }
+                ],
+            )
+
+    monkeypatch.setattr(cli, "load_retail_tasks", lambda **_: [object()])
+    monkeypatch.setattr(cli, "load_retail_policy", lambda: "Policy")
+    monkeypatch.setattr(cli.BenchmarkConfig, "from_env", lambda **_: object())
+    monkeypatch.setattr(cli, "BenchmarkRunner", FakeRunner)
+    args = Namespace(
+        task_ids="5",
+        selection_file=None,
+        split="test",
+        output=Path("eval-runs"),
+        concurrency=1,
+        timeout=1,
+        trials=1,
+        experiment_id="test-run",
+    )
+
+    if raises:
+        with pytest.raises(SystemExit, match="could not be evaluated reliably"):
+            await cli._run(args)
+    else:
+        await cli._run(args)

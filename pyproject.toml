@@ -25,6 +25,9 @@ providers = [
 s3 = [
   "boto3>=1.35,<2",
 ]
+postgres = [
+  "psycopg[binary]>=3.2,<4",
+]
 dev = [
   "mypy>=1.18,<2",
   "pytest>=8.4,<9",
@@ -67,4 +70,8 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = ["boto3.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["psycopg.*"]
 ignore_missing_imports = true

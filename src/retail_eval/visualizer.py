@@ -176,13 +176,16 @@ def parse_range(value: str | None, size: int) -> tuple[int, int]:
 
 def serve_visualizer(
     *,
-    database: Path,
+    database: Path | str,
     experiment_id: str,
     host: str = "127.0.0.1",
     port: int = 8765,
     open_browser: bool = True,
 ) -> None:
-    if not database.is_file():
+    if (
+        not str(database).startswith(("postgresql://", "postgres://"))
+        and not Path(database).is_file()
+    ):
         raise ValueError(f"Results database does not exist: {database}")
     results = ResultsStore(database)
     results.experiment(experiment_id)
@@ -193,7 +196,7 @@ def serve_visualizer(
     display_host = "127.0.0.1" if host in {"0.0.0.0", "::"} else host
     url = f"http://{display_host}:{server.server_port}"
     print(f"Trajectory visualizer: {url}")
-    print(f"Experiment: {experiment_id} in {database}")
+    print(f"Experiment: {experiment_id} in {results.location}")
     if open_browser:
         threading.Timer(0.15, webbrowser.open, args=(url,)).start()
     try:

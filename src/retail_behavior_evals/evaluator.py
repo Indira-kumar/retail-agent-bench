@@ -12,7 +12,7 @@ from retail_behavior_evals.models import BehaviorResult, CaseResult, SuiteResult
 from retail_eval.results import ResultsStore
 
 
-def evaluate_behavior_suite(database: Path, experiment_ids: Sequence[str]) -> SuiteResult:
+def evaluate_behavior_suite(database: Path | str, experiment_ids: Sequence[str]) -> SuiteResult:
     trials = _load_trials(database, experiment_ids)
     behavior_results = tuple(
         _evaluate_behavior(
@@ -123,9 +123,14 @@ def _evaluate_tool_error_explanation(
     return passed, evidence
 
 
-def _load_trials(database: Path, experiment_ids: Sequence[str]) -> dict[str, list[TrialArtifacts]]:
+def _load_trials(
+    database: Path | str, experiment_ids: Sequence[str]
+) -> dict[str, list[TrialArtifacts]]:
     trials: defaultdict[str, list[TrialArtifacts]] = defaultdict(list)
-    if not database.is_file():
+    if (
+        not str(database).startswith(("postgresql://", "postgres://"))
+        and not Path(database).is_file()
+    ):
         raise ValueError(f"Results database does not exist: {database}")
     store = ResultsStore(database)
     for experiment_id in experiment_ids:

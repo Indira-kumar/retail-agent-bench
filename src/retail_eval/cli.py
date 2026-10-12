@@ -6,6 +6,7 @@ import argparse
 import asyncio
 import json
 import logging
+import os
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -40,7 +41,7 @@ def main() -> None:
     if args.command == "import":
         store = default_results_store(args.output)
         for root in args.results:
-            print(f"Imported {import_experiment(store, root)} into {store.database}")
+            print(f"Imported {import_experiment(store, root)} into {store.location}")
         return
     asyncio.run(_run(args))
 
@@ -63,7 +64,14 @@ async def _run(args: argparse.Namespace) -> None:
     passed = sum(1 for summary in summaries if summary["reward"] == 1.0)
     print(f"Experiment: {experiment_id}")
     print(f"Passed: {passed}/{len(summaries)}")
-    print(f"Results database: {store.database}")
+    print(f"Results database: {store.location}")
+    invalid = sum(
+        summary["termination_reason"] == "infrastructure_error"
+        or "scoring_error" in summary["failure_labels"]
+        for summary in summaries
+    )
+    if invalid:
+        raise SystemExit(f"{invalid} trial(s) could not be evaluated reliably")
 
 
 def _list_tasks(split: str) -> None:
@@ -115,7 +123,7 @@ def _parser() -> argparse.ArgumentParser:
     visualize_parser = commands.add_parser("visualize")
     visualize_parser.add_argument("experiment_id")
     visualize_parser.add_argument(
-        "--database", type=Path, default=Path("eval-runs/results.sqlite3")
+        "--database", default=os.getenv("EVAL_DATABASE_URL", "eval-runs/results.sqlite3")
     )
     visualize_parser.add_argument("--host", default="127.0.0.1")
     visualize_parser.add_argument("--port", type=int, default=8765)

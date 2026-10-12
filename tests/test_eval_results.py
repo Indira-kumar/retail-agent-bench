@@ -7,6 +7,7 @@ import sqlite3
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
+from uuid import uuid4
 
 import pytest
 
@@ -176,15 +177,19 @@ async def test_benchmark_runner_persists_directly_to_database(
     )
     task = SimpleNamespace(id="5", model_dump=lambda **_: {"id": "5"})
 
+    expected_id = f"test-run-{uuid4().hex[:8]}"
     store, experiment_id, summaries = await runner.BenchmarkRunner(
         config, trial_runner=FakeTrialRunner()
-    ).run(tasks=[task], policy="# Policy", trials=1, experiment_id="test-run")
+    ).run(tasks=[task], policy="# Policy", trials=1, experiment_id=expected_id)
 
-    assert experiment_id == "test-run"
+    assert experiment_id == expected_id
     assert summaries[0]["reward"] == 1.0
-    assert store.trial("test-run", "5", 1)["documents"]["simulation"]["id"] == "run-5"
-    assert store.audio_record("test-run", "5", 1, "input")["byte_size"] == 4
-    assert not await asyncio.to_thread(lambda: list(tmp_path.glob("test-run/**/*.json")))
+    assert store.trial(expected_id, "5", 1)["documents"]["simulation"]["id"] == "run-5"
+    audio_record = store.audio_record(expected_id, "5", 1, "input")
+    assert audio_record is not None
+    assert audio_record["byte_size"] == 4
+    assert store.audio.read(audio_record["uri"], 0, 3) == b"RIFF"
+    assert not await asyncio.to_thread(lambda: list(tmp_path.glob(f"{expected_id}/**/*.json")))
 
 
 def _write_json(path: Path, value: object) -> None:

@@ -4,13 +4,17 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 from retail_behavior_evals.evaluator import evaluate_behavior_suite
 from retail_eval.results import ResultsStore
 
 
 def main() -> None:
+    load_dotenv(".env.local")
     args = _parser().parse_args()
     result = evaluate_behavior_suite(args.database, args.experiments)
     report = json.dumps(result.as_dict(), indent=2)
@@ -26,7 +30,9 @@ def main() -> None:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="retail-behavior-eval")
     parser.add_argument("experiments", nargs="+")
-    parser.add_argument("--database", type=Path, default=Path("eval-runs/results.sqlite3"))
+    parser.add_argument(
+        "--database", default=os.getenv("EVAL_DATABASE_URL", "eval-runs/results.sqlite3")
+    )
     parser.add_argument("--output", type=Path)
     return parser
 

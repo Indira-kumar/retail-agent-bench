@@ -71,3 +71,5 @@ Follow the [local setup guide](docs/local-setup.md) to install and run the agent
 Eval runs now persist to `eval-runs/results.sqlite3`; audio is stored locally under
 `eval-runs/audio` or in an S3-compatible bucket. See the
 [result schema and migration notes](docs/module-2-implementation-notes.md#result-storage).
+For a local PostgreSQL and S3 test stack, follow the
+[Compose instructions](docs/local-setup.md#local-postgresql-and-s3-test-stack).

@@ -44,10 +44,13 @@ instances, audio, and event streams from crossing trial boundaries.
 ## Result storage
 
 `eval-runs/results.sqlite3` is the default result database. It uses SQLite WAL mode and a
-versioned schema. Audio defaults to `eval-runs/audio/<experiment-id>/task_<id>/trial_<n>/`.
+versioned schema. Set `EVAL_DATABASE_URL` to a PostgreSQL connection URL to use the Compose
+database instead; both backends have the same result tables and access layer. Audio defaults to
+`eval-runs/audio/<experiment-id>/task_<id>/trial_<n>/`.
 Set `EVAL_AUDIO_S3_BUCKET` to store WAV objects in S3 or a compatible store, with optional
 `EVAL_AUDIO_S3_PREFIX` and `EVAL_AUDIO_S3_ENDPOINT_URL`. Install `uv sync --extra s3` for that
-backend. Standard AWS credentials and region configuration apply. The database keeps object
+backend, and `uv sync --extra postgres` for PostgreSQL. Standard AWS credentials and region
+configuration apply. The database keeps object
 URIs, byte sizes, and SHA-256 hashes; it never stores WAV bytes.
 
 | Table | Purpose |
