@@ -1,0 +1,9 @@
+{
+  "suite_id": "retail_prompt_behaviors_v1",
+  "task_ids": ["27", "40", "49", "51", "53"],
+  "behaviors": [
+    "spoken_email_canonicalization",
+    "spoken_name_authentication",
+    "tool_rejection_grounding"
+  ]
+}

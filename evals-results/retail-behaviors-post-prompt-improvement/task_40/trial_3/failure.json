@@ -1,0 +1,9 @@
+{
+  "labels": [
+    "db_state_mismatch",
+    "nl_assertion_failed",
+    "communication_failed",
+    "expected_action_missing",
+    "tool_error"
+  ]
+}
