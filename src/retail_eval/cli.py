@@ -6,11 +6,14 @@ import argparse
 import asyncio
 import json
 import logging
+import os
 from pathlib import Path
 
 from dotenv import load_dotenv
 
 from retail_eval.config import BenchmarkConfig
+from retail_eval.migration import import_experiment
+from retail_eval.results import default_results_store
 from retail_eval.runner import BenchmarkRunner
 from retail_eval.tasks import list_retail_tasks, load_retail_policy, load_retail_tasks
 from retail_eval.visualizer import serve_visualizer
@@ -28,11 +31,17 @@ def main() -> None:
         return
     if args.command == "visualize":
         serve_visualizer(
-            results_dir=args.results,
+            database=args.database,
+            experiment_id=args.experiment_id,
             host=args.host,
             port=args.port,
             open_browser=not args.no_open,
         )
+        return
+    if args.command == "import":
+        store = default_results_store(args.output)
+        for root in args.results:
+            print(f"Imported {import_experiment(store, root)} into {store.location}")
         return
     asyncio.run(_run(args))
 
@@ -46,16 +55,23 @@ async def _run(args: argparse.Namespace) -> None:
         concurrency=args.concurrency,
         task_timeout_seconds=args.timeout,
     )
-    store, summaries = await BenchmarkRunner(config).run(
+    store, experiment_id, summaries = await BenchmarkRunner(config).run(
         tasks=tasks,
         policy=policy,
         trials=args.trials,
         experiment_id=args.experiment_id,
     )
     passed = sum(1 for summary in summaries if summary["reward"] == 1.0)
-    print(f"Experiment: {store.root}")
+    print(f"Experiment: {experiment_id}")
     print(f"Passed: {passed}/{len(summaries)}")
-    print(f"Failure clusters: {store.root / 'failure_clusters.json'}")
+    print(f"Results database: {store.location}")
+    invalid = sum(
+        summary["termination_reason"] == "infrastructure_error"
+        or "scoring_error" in summary["failure_labels"]
+        for summary in summaries
+    )
+    if invalid:
+        raise SystemExit(f"{invalid} trial(s) could not be evaluated reliably")
 
 
 def _list_tasks(split: str) -> None:
@@ -105,10 +121,16 @@ def _parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--experiment-id")
 
     visualize_parser = commands.add_parser("visualize")
-    visualize_parser.add_argument("results", type=Path)
+    visualize_parser.add_argument("experiment_id")
+    visualize_parser.add_argument(
+        "--database", default=os.getenv("EVAL_DATABASE_URL", "eval-runs/results.sqlite3")
+    )
     visualize_parser.add_argument("--host", default="127.0.0.1")
     visualize_parser.add_argument("--port", type=int, default=8765)
     visualize_parser.add_argument("--no-open", action="store_true")
+    import_parser = commands.add_parser("import")
+    import_parser.add_argument("results", type=Path, nargs="+")
+    import_parser.add_argument("--output", type=Path, default=Path("eval-runs"))
     return parser
 
 

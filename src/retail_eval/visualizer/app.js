@@ -141,13 +141,10 @@ function renderTrialSwitcher() {
     .join("");
 }
 
-function parseEvents(text) {
-  if (!text) return [];
-  return text
-    .split(/\r?\n/)
-    .filter(Boolean)
-    .map((line, index) => {
-      const record = JSON.parse(line);
+function parseEvents(records) {
+  if (!records) return [];
+  return records
+    .map((record, index) => {
       return { ...record.event, sourceIndex: index };
     })
     .filter((event) => event && event.occurred_at)
@@ -386,18 +383,11 @@ async function selectRun(taskId, trial) {
   renderTrialSwitcher();
   updateHash();
 
-  const base = `/data/${summary.artifact_path}`;
-  const [task, score, failure, simulation, relevantPolicy, eventText] = await Promise.all([
-    fetchJson(`${base}/task.json`),
-    fetchJson(`${base}/score.json`, true),
-    fetchJson(`${base}/failure.json`, true),
-    fetchJson(`${base}/simulation.json`, true),
-    fetchJson(`${base}/relevant_policy.json`, true),
-    fetchText(`${base}/events.jsonl`),
-  ]);
+  const result = await fetchJson(`/api/trial/${encodeURIComponent(taskId)}/${Number(summary.trial)}`);
   if (loadToken !== state.loadToken) return;
 
-  state.events = parseEvents(eventText);
+  const { task, score, failure, simulation, relevant_policy: relevantPolicy } = result.documents;
+  state.events = parseEvents(result.events);
   state.run = { summary, task, score, failure, simulation, relevantPolicy };
   const instructions = task?.user_scenario?.instructions ?? {};
   elements.runBreadcrumb.textContent = `${state.experiment.experiment_id} / trial ${state.selectedTrial}`;
@@ -405,8 +395,8 @@ async function selectRun(taskId, trial) {
   elements.scenario.textContent = instructions.reason_for_call ?? "No scenario description recorded.";
   const context = [instructions.known_info, instructions.unknown_info, instructions.task_instructions].filter(Boolean);
   elements.knownInfo.textContent = context.join(" · ");
-  elements.inputAudio.src = `${base}/input.wav`;
-  elements.outputAudio.src = `${base}/output.wav`;
+  elements.inputAudio.src = result.audio.input ? `/audio/${encodeURIComponent(taskId)}/${Number(summary.trial)}/input` : "";
+  elements.outputAudio.src = result.audio.output ? `/audio/${encodeURIComponent(taskId)}/${Number(summary.trial)}/output` : "";
   renderStats(summary, state.events);
   renderTimeline();
   renderEvaluation(score, failure);
@@ -467,16 +457,14 @@ function bindEvents() {
 async function initialize() {
   bindEvents();
   try {
-    const [experiment, summaries] = await Promise.all([
-      fetchJson("/data/experiment.json"),
-      fetchJson("/data/summary.json"),
-    ]);
+    const { experiment, summaries } = await fetchJson("/api/overview");
     state.experiment = experiment;
     state.summaries = summaries;
     const groups = groupRuns();
     await Promise.all(
       [...groups.entries()].map(async ([taskId, runs]) => {
-        const task = await fetchJson(`/data/${runs[0].artifact_path}/task.json`);
+        const result = await fetchJson(`/api/trial/${encodeURIComponent(taskId)}/${Number(runs[0].trial)}`);
+        const task = result.documents.task;
         state.tasks.set(taskId, task);
       }),
     );

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import mimetypes
 import re
 import threading
@@ -11,12 +12,15 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
+from retail_eval.results import ResultsStore
+
 
 class VisualizerServer(ThreadingHTTPServer):
     allow_reuse_address = True
     daemon_threads = True
 
-    results_root: Path
+    results: ResultsStore
+    experiment_id: str
     static_root: Path
 
 
@@ -42,13 +46,67 @@ class VisualizerRequestHandler(BaseHTTPRequestHandler):
                 include_body=include_body,
             )
             return
-        if request_path.startswith("/data/"):
-            self._serve_file(
-                resolve_request_path(self.server.results_root, request_path.removeprefix("/data/")),
+        if request_path == "/api/overview":
+            self._serve_json(
+                {
+                    "experiment": self.server.results.experiment(self.server.experiment_id),
+                    "summaries": self.server.results.summaries(self.server.experiment_id),
+                },
                 include_body=include_body,
             )
             return
+        match = re.fullmatch(r"/api/trial/([^/]+)/(\d+)", request_path)
+        if match:
+            try:
+                trial = self.server.results.trial(
+                    self.server.experiment_id, match[1], int(match[2])
+                )
+            except ValueError:
+                self.send_error(HTTPStatus.NOT_FOUND)
+                return
+            self._serve_json(trial, include_body=include_body)
+            return
+        match = re.fullmatch(r"/audio/([^/]+)/(\d+)/(input|output)", request_path)
+        if match:
+            self._serve_audio(match[1], int(match[2]), match[3], include_body=include_body)
+            return
         self.send_error(HTTPStatus.NOT_FOUND)
+
+    def _serve_json(self, value: object, *, include_body: bool) -> None:
+        body = json.dumps(value, ensure_ascii=False).encode("utf-8")
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        if include_body:
+            self.wfile.write(body)
+
+    def _serve_audio(
+        self, task_id: str, trial_number: int, channel: str, *, include_body: bool
+    ) -> None:
+        record = self.server.results.audio_record(
+            self.server.experiment_id, task_id, trial_number, channel
+        )
+        if record is None:
+            self.send_error(HTTPStatus.NOT_FOUND)
+            return
+        size = record["byte_size"]
+        start, end = parse_range(self.headers.get("Range"), size)
+        partial = self.headers.get("Range") is not None
+        self.send_response(HTTPStatus.PARTIAL_CONTENT if partial else HTTPStatus.OK)
+        self.send_header("Content-Type", "audio/wav")
+        self.send_header("Accept-Ranges", "bytes")
+        self.send_header("Content-Length", str(max(0, end - start + 1)))
+        if partial:
+            self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
+        self.end_headers()
+        if include_body and size:
+            try:
+                for chunk in self.server.results.audio.stream(record["uri"], start, end):
+                    self.wfile.write(chunk)
+            except (BrokenPipeError, ConnectionResetError):
+                return
 
     def _serve_file(self, path: Path | None, *, include_body: bool) -> None:
         if path is None or not path.is_file():
@@ -116,31 +174,29 @@ def parse_range(value: str | None, size: int) -> tuple[int, int]:
     return (start, end) if start <= end else (0, size - 1)
 
 
-def validate_results_dir(results_dir: Path) -> Path:
-    root = results_dir.expanduser().resolve()
-    required_files = (root / "experiment.json", root / "summary.json")
-    missing = [path.name for path in required_files if not path.is_file()]
-    if missing:
-        names = ", ".join(missing)
-        raise ValueError(f"Not a benchmark experiment directory; missing {names}: {root}")
-    return root
-
-
 def serve_visualizer(
     *,
-    results_dir: Path,
+    database: Path | str,
+    experiment_id: str,
     host: str = "127.0.0.1",
     port: int = 8765,
     open_browser: bool = True,
 ) -> None:
-    root = validate_results_dir(results_dir)
+    if (
+        not str(database).startswith(("postgresql://", "postgres://"))
+        and not Path(database).is_file()
+    ):
+        raise ValueError(f"Results database does not exist: {database}")
+    results = ResultsStore(database)
+    results.experiment(experiment_id)
     server = VisualizerServer((host, port), VisualizerRequestHandler)
-    server.results_root = root
+    server.results = results
+    server.experiment_id = experiment_id
     server.static_root = Path(__file__).with_name("visualizer")
     display_host = "127.0.0.1" if host in {"0.0.0.0", "::"} else host
     url = f"http://{display_host}:{server.server_port}"
     print(f"Trajectory visualizer: {url}")
-    print(f"Experiment: {root}")
+    print(f"Experiment: {experiment_id} in {results.location}")
     if open_browser:
         threading.Timer(0.15, webbrowser.open, args=(url,)).start()
     try:

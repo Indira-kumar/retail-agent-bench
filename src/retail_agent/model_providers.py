@@ -59,11 +59,11 @@ def build_llm(*, provider: LLMProvider, model: str) -> Any:
         raise ValueError("OPENROUTER_API_KEY is required when the LLM provider is openrouter")
 
     try:
-        from livekit.plugins import openai
+        from livekit.plugins.openai import LLM
     except ModuleNotFoundError as exc:
         raise RuntimeError(
             "OpenRouter LLM support requires the LiveKit OpenAI plugin; "
             "install it with `uv sync --extra providers`"
         ) from exc
 
-    return openai.LLM.with_openrouter(model=model)
+    return LLM.with_openrouter(model=model)

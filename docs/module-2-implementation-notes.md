@@ -41,35 +41,51 @@ recorded for that trial and does not cancel the remaining rooms.
 Room names include the task ID, trial number, and a random suffix. This prevents mutable tau DB
 instances, audio, and event streams from crossing trial boundaries.
 
-## Artifact layout
+## Result storage
 
-```text
-eval-runs/<experiment-id>/
-├── experiment.json
-├── summary.json
-├── failure_clusters.json
-└── task_<task-id>/trial_<n>/
-    ├── task.json
-    ├── policy.md
-    ├── relevant_policy.json
-    ├── input.wav
-    ├── output.wav
-    ├── events.jsonl
-    ├── evaluator_events.json
-    ├── evaluator_history.json
-    ├── session_report.json
-    ├── simulation.json
-    ├── score.json
-    └── failure.json
+`eval-runs/results.sqlite3` is the default result database. It uses SQLite WAL mode and a
+versioned schema. Set `EVAL_DATABASE_URL` to a PostgreSQL connection URL to use the Compose
+database instead; both backends have the same result tables and access layer. Audio defaults to
+`eval-runs/audio/<experiment-id>/task_<id>/trial_<n>/`.
+Set `EVAL_AUDIO_S3_BUCKET` to store WAV objects in S3 or a compatible store, with optional
+`EVAL_AUDIO_S3_PREFIX` and `EVAL_AUDIO_S3_ENDPOINT_URL`. Install `uv sync --extra s3` for that
+backend, and `uv sync --extra postgres` for PostgreSQL. Standard AWS credentials and region
+configuration apply. The database keeps object
+URIs, byte sizes, and SHA-256 hashes; it never stores WAV bytes.
+
+| Table | Purpose |
+| --- | --- |
+| `experiments` | Identity, creation time, config, selected tasks, planned trials, failure clusters |
+| `experiment_documents` | Original experiment manifest, summary, clusters, and any legacy behavior report |
+| `trials` | One row per task and trial, with reward, termination, duration, room, labels, and original summary |
+| `trial_documents` | Lossless task, full policy, relevant policy, tau simulation, score, failure, evaluator events/history, session report, and runner error |
+| `trace_events` | Ordered raw event records with indexed event kind and timestamp |
+| `trial_audio` | Input and output WAV object references and integrity metadata |
+| `analysis_runs` | Timestamped behavior-suite reports and the experiment IDs they analyzed |
+
+The queryable columns support comparisons across runs. JSON payloads preserve the complete tau
+and LiveKit result shapes, including fields added by future versions. A trial's database update
+is transactional after audio uploads complete. If persistence fails, the run reports the error;
+an interrupted upload can leave an unreferenced object that may be removed later. WAVs are staged
+temporarily during a live trial and removed after persistence.
+
+`input` is the synthesized customer audio sent to the room; `output` is the retail agent audio
+received by the evaluator. Missing audio rows mean that side produced no frames. Ordered
+`trace_events` contain the STT, LLM, tool, and TTS trajectory. `simulation` is the normalized tau
+representation. `relevant_policy` is a deterministic convenience view; `policy` is the full
+authoritative text.
+
+Import older JSON result directories with:
+
+```bash
+uv run retail-eval import evals-results/* --output eval-runs
 ```
 
-`input.wav` is the synthesized customer audio sent to the room. `output.wav` is the retail
-agent audio received by the evaluator. An audio file is absent when that side produced no
-frames. `events.jsonl` is the primary ordered trace source; `simulation.json` is its normalized
-tau representation.
-
-`relevant_policy.json` is a deterministic convenience view based on the task's expected tools.
-`policy.md` remains the complete authoritative policy.
+The importer retains all original JSON values, including incomplete trials, and copies existing
+audio objects. Imported experiment IDs use their source directory names so copied runs with the
+same original manifest ID remain distinct. The original manifest ID is available as
+`source_experiment_id` in the visualizer API. A second import of the same directory name fails.
+The original directories remain available for comparison until you decide to remove them.
 
 ## Failure clustering
 
